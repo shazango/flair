@@ -39,6 +39,8 @@ export const TPS_GET_ROUTE_STATUS: Record<string, number | readonly number[]> = 
   FederationSync: 404,
   FeedMemories: 404,
   FeedSouls: 404,
+  Growth: 404,
+  GuidanceAreas: 404,
   Health: healthReadinessStatuses,
   HealthDetail: 200,
   IdpConfig: 403,

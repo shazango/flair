@@ -425,6 +425,10 @@ import {
   register as registerAsk,
 } from "./commands/ask.js";
 import {
+  bindCli as bindGrowthCli,
+  register as registerGrowth,
+} from "./commands/growth.js";
+import {
   bindCli as bindBootstrapCli,
   register as registerBootstrap,
 } from "./commands/bootstrap.js";
@@ -9209,6 +9213,14 @@ bindAskCli({
   resolveSigningAgentId,
 });
 registerAsk(program);
+
+// ─── flair growth / flair guidance ──────────────────────────────────────────────
+// Growth and guidance views live in src/commands/growth.ts.
+bindGrowthCli({
+  api,
+  resolveSigningAgentId,
+});
+registerGrowth(program);
 
 // ─── flair help ──────────────────────────────────────────────────────────────
 // Command registration lives in src/commands/help.ts (flair#2887).

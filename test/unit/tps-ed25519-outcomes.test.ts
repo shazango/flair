@@ -40,6 +40,8 @@ const getOutcomes: Array<[string, number | readonly number[], string]> = [
   ["FederationSync", 404, "resources/Federation.ts:666: no get/search/allowRead override"],
   ["FeedMemories", 404, "resources/MemoryFeed.ts:304: allowRead allowVerified; no get/search"],
   ["FeedSouls", 404, "resources/SoulFeed.ts:8: allowRead allowVerified; no get/search"],
+  ["Growth", 404, "resources/Growth.ts:22: no get/search/allowRead override"],
+  ["GuidanceAreas", 404, "resources/GuidanceAreas.ts:16: no get/search/allowRead override"],
   ["Health", [200, 503], "resources/health.ts:101: allowRead true; get:104 selects readiness status (multi-worker:129); no search"],
   ["HealthDetail", 200, "resources/health.ts:188: allowRead allowVerified; get:192 returns ok true; no search"],
   ["IdpConfig", 403, "resources/XAA.ts:352: allowRead allowAdmin refuses; inherited table get/search"],

@@ -2,7 +2,7 @@
 # Byte-identical gate for src/cli.ts modularization. Do not edit by hand.
 # Refresh: UPDATE_CLI_SURFACE_SNAPSHOT=1 bun test test/unit-isolated/cli-surface-snapshot.test.ts
 # helpWidth=80 (pinned; TTY columns must not affect this file)
-# commands=154 options=737
+# commands=157 options=740
 #
 # TREE is registration order: every command/subcommand + declared options/args.
 # HELP is each command's outputHelp() (--help, including addHelpText).
@@ -18,7 +18,7 @@ flair
     -v, --version
       description: output the version number
       attr: version
-  subcommands: init, agent, keys, hook, mcp, principal, idp, grant, revoke, integrity, federation, rem, status, snapshot, upgrade, stop, start, restart, uninstall, reembed, test, deploy, fleet, doctor, quality, session, memory, search, bootstrap, relationship, soul, bridge, backup, restore, backup-approval, export, import, inspect, migrate-harness-memory, presence, workspace, orgevent, attention, check, ask, help
+  subcommands: init, agent, keys, hook, mcp, principal, idp, grant, revoke, integrity, federation, rem, status, snapshot, upgrade, stop, start, restart, uninstall, reembed, test, deploy, fleet, doctor, quality, session, memory, search, bootstrap, relationship, soul, bridge, backup, restore, backup-approval, export, import, inspect, migrate-harness-memory, presence, workspace, orgevent, attention, check, ask, growth, guidance, help
 
 flair init
   description: One-command Flair setup — bootstrap the instance, register an agent, and wire MCP clients
@@ -3187,6 +3187,31 @@ flair ask
       description: Output the raw /Ask response
       attr: json
 
+flair growth
+  description: Your own record of improvement: memories others confirmed, and the areas you have been refining
+  usage: [options]
+  options:
+    --agent <id>
+      description: Agent ID (or set FLAIR_AGENT_ID env); operators may name any agent
+      attr: agent
+    --json
+      description: Output the raw /Growth response
+      attr: json
+
+flair guidance
+  description: Guidance for agents, from refinements
+  usage: [options] [command]
+  options: (none)
+  subcommands: areas
+
+flair guidance areas
+  description: Operators: which areas draw refinements and whether guidance exists for them (admin credentials)
+  usage: [options]
+  options:
+    --json
+      description: Output the raw /GuidanceAreas response
+      attr: json
+
 flair help
   description: display help for command
   usage: [options] [command...]
@@ -3251,6 +3276,8 @@ Commands:
   attention [options] <type:value>          What's touching this entity in the last N days? Argument is a vocabulary string (type:value from a closed set, e.g. repo:owner/name). Grouped view across memory/relationship/workspace/presence/orgevent (POST /AttentionQuery)
   check                                     Recall checks: measure how well search finds this agent's memories, and whether it abstains when nothing answers
   ask [options] [question]                  Answer a question from memory, citing the memories it used with their trust evidence
+  growth [options]                          Your own record of improvement: memories others confirmed, and the areas you have been refining
+  guidance                                  Guidance for agents, from refinements
   help [command...]                         display help for command
 
 ----- flair init -----
@@ -6941,6 +6968,50 @@ Options:
 
 Global Options:
   -v, --version    output the version number
+
+----- flair growth -----
+Usage: flair growth [options]
+
+Your own record of improvement: memories others confirmed, and the areas you
+have been refining
+
+Options:
+  --agent <id>   Agent ID (or set FLAIR_AGENT_ID env); operators may name any
+                 agent
+  --json         Output the raw /Growth response
+  -h, --help     display help for command
+
+Global Options:
+  -v, --version  output the version number
+
+----- flair guidance -----
+Usage: flair guidance [options] [command]
+
+Guidance for agents, from refinements
+
+Options:
+  -h, --help       display help for command
+
+Global Options:
+  -v, --version    output the version number
+
+Commands:
+  areas [options]  Operators: which areas draw refinements and whether guidance
+                   exists for them (admin credentials)
+  help [command]   display help for command
+
+----- flair guidance areas -----
+Usage: flair guidance areas [options]
+
+Operators: which areas draw refinements and whether guidance exists for them
+(admin credentials)
+
+Options:
+  --json         Output the raw /GuidanceAreas response
+  -h, --help     display help for command
+
+Global Options:
+  -v, --version  output the version number
 
 ----- flair help -----
 Usage: flair help [options] [command...]
