@@ -1,0 +1,22 @@
+# MemoryOutcome — confirmations and refinements of memories (slice 4 of the
+# outcome engine; docs: docs/ask.md). One row per
+# (reporter, memory, kind): `id` is `${agentId}:${memoryId}:${kind}`, so
+# reporting twice is a no-op, like the MemoryUsage ledger.
+#
+#   kind "confirmed" — the reporter relied on this memory and it held up.
+#   kind "refined"   — the reporter wrote something more accurate:
+#                      `refinementMemoryId` names a memory the reporter wrote.
+#
+# Written only by resources/outcome-recording.ts (POST /RecordOutcome) and
+# read only in-process (POST /Ask). No REST surface (@table without @export)
+# and no agent role grant: the rows name who reported what, and the engine
+# keeps no per-agent tallies anyone can read. Outcomes never gate a read or
+# grant authority.
+type MemoryOutcome @table(database: "flair") {
+  id: ID @primaryKey                   # `${agentId}:${memoryId}:${kind}`
+  agentId: String! @indexed            # the reporting (verified) agent
+  memoryId: String! @indexed           # the memory confirmed or refined
+  kind: String!                        # "confirmed" | "refined"
+  refinementMemoryId: String @indexed  # kind "refined" only
+  createdAt: String!
+}

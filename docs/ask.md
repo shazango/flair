@@ -33,6 +33,33 @@ Answers need a generative backend, the same one REM uses (see
 The CLI lists only the memories the answer cites. `--json` prints the whole response,
 including every source.
 
+## Saying it held up, or adding what's more accurate
+
+After an answer, `ask` prints two follow-ups:
+
+```bash
+flair ask --confirm mem-7f3a…,mem-91c2…                  # these held up
+flair ask --refine mem-7f3a… "also re-run flair init afterwards"
+```
+
+- **`--confirm`** records that the memories held up for you. Later answers show a memory
+  others keep confirming as *steady (confirmed by N)*. Your confirmation of your own memory
+  is stored but not counted: standing comes from others relying on a memory.
+- **`--refine`** saves what's more accurate as a new shared memory and links it to the one
+  it improves. From then on, whenever `ask` uses the original, the refinement comes with
+  it, marked `↻ refines [n]`, and the model answers from both.
+
+Refinement is growth, not blame. The original memory keeps its ranking, its
+confirmations and its place in search; it just gains a pointer forward. Nothing counts
+corrections against a memory or an agent, and no view lists who refined what. A
+refinement you keep private is only brought forward for readers who can read it.
+
+Both go through `POST /RecordOutcome`, which follows the same rules as `RecordUsage`: any
+verified agent, for memories in its read scope, one entry per agent and memory (repeats
+are ignored), and the same `{ recorded: true }` reply whether or not the memory exists or
+is visible to you, so it can't be used to probe ids. A refinement must name another
+memory you wrote.
+
 ## Without a model
 
 If no generative backend is configured, or the model's reply isn't usable, `ask` still
@@ -47,13 +74,17 @@ No answer written (no LLM backend is configured). The closest memories:
 
 ## What it never does
 
-- **It writes nothing.** `ask` never records usage from the model's citations. A model
-  citing a memory isn't evidence that the memory held up, and counting it would feed
-  ranking with its own output (#623). Confirming an answer will be an explicit step.
+- **It records nothing by itself.** Asking writes nothing, and `ask` never records usage
+  from the model's citations. A model citing a memory isn't evidence that the memory held
+  up, and counting it would feed ranking with its own output (#623). Only `--confirm`
+  and `--refine` record anything, and only when you run them.
 - **It never widens read scope.** A non-admin can only ask from its own scope, the same
   rule as search.
 
 ## HTTP
+
+`POST /RecordOutcome` with `{ memoryId, kind: "confirmed" }` or
+`{ memoryId, kind: "refined", refinementMemoryId }` returns `{ recorded: true }`.
 
 `POST /Ask` with `{ q, agentId?, limit? }` (`limit` defaults to 5, max 10). It returns:
 
@@ -62,6 +93,6 @@ No answer written (no LLM backend is configured). The closest memories:
 | `abstained` | search found nothing above the threshold (`bestScore`, `threshold` say why) |
 | `answer` | the answer with `[n]` citations, or `null` |
 | `citations` | the `n` the answer cites |
-| `sources` | `[{ n, id, content, createdAt, trust }]`, numbered as in the answer |
+| `sources` | `[{ n, id, content, createdAt, trust, confirmedBy, refinedBy, refines }]`, numbered as in the answer. `confirmedBy`: agents other than the author who confirmed it; `refinedBy`: the `n` of its readable refinements; `refines`: on a refinement search didn't return, the `n` it refines |
 | `answerUnavailable` | why `answer` is `null` despite sources: `no_backend`, `generate_failed`, `validation_failed`, `incomplete_generation` |
 | `model` | the configured model name, or `null` for the default |

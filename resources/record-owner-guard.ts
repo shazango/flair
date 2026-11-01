@@ -133,6 +133,9 @@ export const OWNER_GUARD_EXEMPT: Readonly<Record<string, string>> = Object.freez
   // (resources/AgentKeyRegistration.ts) admits admin reads and refuses every
   // write. The Harper operations API is a separate raw-table trust root.
   AgentKeyRegistration: "admin-read-only audit log; Flair resource-route writes refused; the registration operation is its only application writer",
+  // Confirmations/refinements ledger: no REST surface; its only writer
+  // (resources/outcome-recording.ts) stamps agentId from the verified caller.
+  MemoryOutcome: "no REST surface; the only writer stamps agentId from the verified caller",
 });
 
 /** The verbs that can mutate a record, and therefore need the rule applied. */

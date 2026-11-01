@@ -25,7 +25,9 @@ const ASK_MAX_TOKENS = 1200;
 
 export interface AskSource {
   content: string;
-  createdAt?: string;
+  createdAt?: string | null;
+  /** Set when this memory refines another source (slice 4): that source's n. */
+  refines?: number;
 }
 
 export const ANSWER_SCHEMA = {
@@ -38,7 +40,8 @@ export function buildAskPrompt(question: string, sources: readonly AskSource[]):
   const numbered = sources
     .map((s, i) => {
       const date = s.createdAt ? ` (${String(s.createdAt).slice(0, 10)})` : "";
-      return `[${i + 1}]${date} ${s.content.slice(0, ASK_CONTENT_CHARS)}`;
+      const refines = s.refines ? ` (refines [${s.refines}])` : "";
+      return `[${i + 1}]${date}${refines} ${s.content.slice(0, ASK_CONTENT_CHARS)}`;
     })
     .join("\n\n");
   return [
@@ -46,6 +49,8 @@ export function buildAskPrompt(question: string, sources: readonly AskSource[]):
     "number of the memory it comes from, like [1] or [2][3]. Do not use outside knowledge.",
     "If the memories do not answer the question, say so plainly instead of guessing.",
     "If memories disagree, present both views with their citations; do not pick a winner.",
+    "A memory marked (refines [n]) is a more accurate version of [n] from someone who relied",
+    "on it: answer from the refinement and cite both. Do not call the original wrong.",
     "Keep the answer short.",
     "",
     `Question: ${question}`,

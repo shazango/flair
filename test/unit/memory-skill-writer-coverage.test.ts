@@ -139,6 +139,8 @@ add("MemoryReflect", ["writer:(databases as any).flair.MemoryCandidate.put#1"],
   "Other table (MemoryCandidate), included by conservative sink enumeration.");
 add("usage-recording", ["writer:(databases as any).flair.MemoryUsage.put#1"],
   "Other table (MemoryUsage), included by conservative sink enumeration.");
+add("outcome-recording", ["writer:(databases as any).flair.MemoryOutcome.put#1"],
+  "Other table (MemoryOutcome), included by conservative sink enumeration.");
 
 // ── Table aliases ──
 add("skill-version-write", ["alias-source:(databases as any).flair?.Memory#1"],

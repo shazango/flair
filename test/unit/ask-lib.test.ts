@@ -25,6 +25,12 @@ describe("buildAskPrompt", () => {
     expect(p).toContain("ONLY the numbered memories");
     expect(p).toContain("present both views");
   });
+
+  it("marks a refinement with the source it refines", () => {
+    const p = buildAskPrompt("q", [{ content: "old" }, { content: "better", refines: 1 }]);
+    expect(p).toContain("[2] (refines [1]) better");
+    expect(p).toContain("Do not call the original wrong");
+  });
 });
 
 describe("parseAnswerOutput", () => {
@@ -88,7 +94,33 @@ describe("formatAskResult", () => {
       "",
       "[1] Rotate with flair agent rotate-key.",
       "    2026-09-14 · strong match · verified author ops · 3d old · m-1",
+      "",
+      "Held up?  flair ask --confirm m-1",
+      'Better?   flair ask --refine <memory-id> "what is more accurate…"',
     ].join("\n"));
+  });
+
+  it("shows steadiness and brings a cited memory's refinement along", () => {
+    const text = formatAskResult({
+      abstained: false, answer: "Rotate, then re-wire clients [3].", citations: [3],
+      sources: [
+        { ...sources[0], confirmedBy: 2, refinedBy: [3] },
+        sources[1],
+        { n: 3, id: "m-3", content: "Also re-run flair init after rotating.", createdAt: null, trust: null, refines: 1 },
+      ],
+    });
+    expect(text).not.toContain("[1] Rotate");
+    expect(text).toContain("[3] Also re-run flair init after rotating.\n    no trust evidence · m-3\n    ↻ refines [1]");
+    expect(text).toContain("Held up?  flair ask --confirm m-3\n");
+  });
+
+  it("lists a refinement under the memory it refines when both are shown", () => {
+    const text = formatAskResult({
+      abstained: false, answer: "Rotate [1].", citations: [1],
+      sources: [{ ...sources[0], confirmedBy: 2, refinedBy: [3] }, { n: 3, id: "m-3", content: "Also re-run init.", trust: null, refines: 1 }],
+    });
+    expect(text).toContain("· steady (confirmed by 2) · m-1\n[3] Also re-run init.");
+    expect(text).toContain("Held up?  flair ask --confirm m-1,m-3\n");
   });
 
   it("falls back to the ranked sources when no answer could be written", () => {

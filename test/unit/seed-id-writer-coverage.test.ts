@@ -129,6 +129,7 @@ add("Federation", [
 ], "SERVER: other tables.");
 add("MemoryReflect", ["writer:(databases as any).flair.MemoryCandidate.put#1"], "SERVER: another table.");
 add("usage-recording", ["writer:(databases as any).flair.MemoryUsage.put#1"], "SERVER: another table.");
+add("outcome-recording", ["writer:(databases as any).flair.MemoryOutcome.put#1"], "SERVER: another table.");
 add("Memory", ["alias-source:(databases as any).flair.Memory#3"],
   "SERVER: confirmSkillDelete reads the committed row and supplies the guarded close retry's table handle; its put is classified above.");
 for (const [file, alias] of [

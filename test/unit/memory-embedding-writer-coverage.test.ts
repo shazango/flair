@@ -153,6 +153,7 @@ add("Federation", [
 ], "OTHER_TABLE", "Federation control tables.");
 add("MemoryReflect", ["writer:(databases as any).flair.MemoryCandidate.put#1"], "OTHER_TABLE", "MemoryCandidate table.");
 add("usage-recording", ["writer:(databases as any).flair.MemoryUsage.put#1"], "OTHER_TABLE", "MemoryUsage table.");
+add("outcome-recording", ["writer:(databases as any).flair.MemoryOutcome.put#1"], "OTHER_TABLE", "MemoryOutcome table.");
 
 function enumerateWriterSites() {
   return [...new Glob("resources/**/*.ts").scanSync(".")]

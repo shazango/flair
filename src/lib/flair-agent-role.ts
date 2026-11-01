@@ -74,6 +74,8 @@ export const FLAIR_AGENT_PERMISSION = {
       // MemoryHitStat (flair#1528): internal search-hit ledger. No agent REST
       // surface (@table without @export). Counts overlay onto Memory reads.
       MemoryHitStat:   grant(false, false, false, false),
+      // MemoryOutcome: confirmations/refinements ledger. Internal only (schemas/outcome.graphql).
+      MemoryOutcome:   grant(false, false, false, false),
       // Agent: read for discovery, update own card; creation/removal is admin.
       Agent:           grant(true,  false, true,  false),
       // Read-only reference data.
