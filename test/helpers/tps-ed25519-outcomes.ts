@@ -74,6 +74,7 @@ export const TPS_GET_ROUTE_STATUS: Record<string, number | readonly number[]> = 
   Peer: 403,
   Presence: 200,
   PromoteMemoryCandidate: 404,
+  RecallProbes: 404,
   RecordUsage: 404,
   ReflectMemories: 404,
   Relationship: 200,

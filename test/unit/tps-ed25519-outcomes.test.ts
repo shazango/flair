@@ -75,6 +75,7 @@ const getOutcomes: Array<[string, number | readonly number[], string]> = [
   ["Peer", 403, "resources/Peer.ts:12: allowRead allowAdmin refuses; inherited table get/search"],
   ["Presence", 200, "resources/Presence.ts:354: allowRead true; get:401 verifies reader and returns roster; inherited search unused"],
   ["PromoteMemoryCandidate", 404, "resources/PromoteMemoryCandidate.ts:15: no get/search/allowRead override"],
+  ["RecallProbes", 404, "resources/RecallProbes.ts:55: no get/search/allowRead override"],
   ["RecordUsage", 404, "resources/RecordUsage.ts:151: no get/search/allowRead override"],
   ["ReflectMemories", 404, "resources/MemoryReflect.ts:88: no get/search/allowRead override"],
   ["Relationship", 200, "resources/Relationship.ts:58: verified read gate; get:68 delegates collection to scoped search:82"],

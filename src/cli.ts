@@ -417,6 +417,10 @@ import {
 } from "./commands/attention.js";
 import { registerHelp } from "./commands/help.js";
 import {
+  bindCli as bindCheckCli,
+  register as registerCheck,
+} from "./commands/check.js";
+import {
   bindCli as bindBootstrapCli,
   register as registerBootstrap,
 } from "./commands/bootstrap.js";
@@ -9185,6 +9189,14 @@ bindAttentionCli({
   resolveSigningAgentId,
 });
 registerAttention(program);
+
+// ─── flair check ────────────────────────────────────────────────────────────────
+// Recall checks live in src/commands/check.ts.
+bindCheckCli({
+  resolveBaseUrl,
+  resolveSigningAgentId,
+});
+registerCheck(program);
 
 // ─── flair help ──────────────────────────────────────────────────────────────
 // Command registration lives in src/commands/help.ts (flair#2887).

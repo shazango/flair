@@ -2,7 +2,7 @@
 # Byte-identical gate for src/cli.ts modularization. Do not edit by hand.
 # Refresh: UPDATE_CLI_SURFACE_SNAPSHOT=1 bun test test/unit-isolated/cli-surface-snapshot.test.ts
 # helpWidth=80 (pinned; TTY columns must not affect this file)
-# commands=149 options=704
+# commands=153 options=726
 #
 # TREE is registration order: every command/subcommand + declared options/args.
 # HELP is each command's outputHelp() (--help, including addHelpText).
@@ -18,7 +18,7 @@ flair
     -v, --version
       description: output the version number
       attr: version
-  subcommands: init, agent, keys, hook, mcp, principal, idp, grant, revoke, integrity, federation, rem, status, snapshot, upgrade, stop, start, restart, uninstall, reembed, test, deploy, fleet, doctor, quality, session, memory, search, bootstrap, relationship, soul, bridge, backup, restore, backup-approval, export, import, inspect, migrate-harness-memory, presence, workspace, orgevent, attention, help
+  subcommands: init, agent, keys, hook, mcp, principal, idp, grant, revoke, integrity, federation, rem, status, snapshot, upgrade, stop, start, restart, uninstall, reembed, test, deploy, fleet, doctor, quality, session, memory, search, bootstrap, relationship, soul, bridge, backup, restore, backup-approval, export, import, inspect, migrate-harness-memory, presence, workspace, orgevent, attention, check, help
 
 flair init
   description: One-command Flair setup — bootstrap the instance, register an agent, and wire MCP clients
@@ -3059,6 +3059,93 @@ flair attention
       description: Output raw JSON
       attr: json
 
+flair check
+  description: Recall checks: measure how well search finds this agent's memories, and whether it abstains when nothing answers
+  usage: [options] [command]
+  options: (none)
+  subcommands: init, run, report
+
+flair check init
+  description: Write test questions from memories in the agent's read scope (adds to an existing set). Needs a generative backend
+  usage: [options]
+  options:
+    --count <n>
+      description: Memories to write questions for (default 20, max 50)
+      attr: count
+    --decoys <n>
+      description: Questions nothing should answer (default 5, max 20)
+      attr: decoys
+    --agent <id>
+      description: Agent ID (or set FLAIR_AGENT_ID env)
+      attr: agent
+    --key <path>
+      description: Ed25519 private key path
+      attr: key
+    --port <port>
+      description: Harper HTTP port
+      attr: port
+    --url <url>
+      description: Flair base URL (overrides --port)
+      attr: url
+    --target <url>
+      description: Remote Flair URL (env: FLAIR_TARGET; alias for --url)
+      attr: target
+    --json
+      description: Output raw JSON
+      attr: json
+
+flair check run
+  description: Run the question set through search and log the result
+  usage: [options]
+  options:
+    --limit <n>
+      description: Results per search (default 10)
+      attr: limit
+    --agent <id>
+      description: Agent ID (or set FLAIR_AGENT_ID env)
+      attr: agent
+    --key <path>
+      description: Ed25519 private key path
+      attr: key
+    --port <port>
+      description: Harper HTTP port
+      attr: port
+    --url <url>
+      description: Flair base URL (overrides --port)
+      attr: url
+    --target <url>
+      description: Remote Flair URL (env: FLAIR_TARGET; alias for --url)
+      attr: target
+    --json
+      description: Output raw JSON
+      attr: json
+
+flair check report
+  description: Trend across runs, and the latest run replayed across abstention thresholds
+  usage: [options]
+  options:
+    --last <n>
+      description: Runs to show (default 10)
+      attr: last
+    --agent <id>
+      description: Agent ID (or set FLAIR_AGENT_ID env)
+      attr: agent
+    --key <path>
+      description: Ed25519 private key path
+      attr: key
+    --port <port>
+      description: Harper HTTP port
+      attr: port
+    --url <url>
+      description: Flair base URL (overrides --port)
+      attr: url
+    --target <url>
+      description: Remote Flair URL (env: FLAIR_TARGET; alias for --url)
+      attr: target
+    --json
+      description: Output raw JSON
+      attr: json
+
 flair help
   description: display help for command
   usage: [options] [command...]
@@ -3121,6 +3208,7 @@ Commands:
   workspace                                 Manage agent workspace state (The Office Space)
   orgevent [options]                        Publish an org-wide coordination event attributed to your agent (PUT /OrgEvent/{id})
   attention [options] <type:value>          What's touching this entity in the last N days? Argument is a vocabulary string (type:value from a closed set, e.g. repo:owner/name). Grouped view across memory/relationship/workspace/presence/orgevent (POST /AttentionQuery)
+  check                                     Recall checks: measure how well search finds this agent's memories, and whether it abstains when nothing answers
   help [command...]                         display help for command
 
 ----- flair init -----
@@ -6696,6 +6784,82 @@ memory/relationship/workspace/presence/orgevent (POST /AttentionQuery)
 
 Options:
   --days <n>      Window size in days (default 7)
+  --agent <id>    Agent ID (or set FLAIR_AGENT_ID env)
+  --key <path>    Ed25519 private key path
+  --port <port>   Harper HTTP port
+  --url <url>     Flair base URL (overrides --port)
+  --target <url>  Remote Flair URL (env: FLAIR_TARGET; alias for --url)
+  --json          Output raw JSON
+  -h, --help      display help for command
+
+Global Options:
+  -v, --version   output the version number
+
+----- flair check -----
+Usage: flair check [options] [command]
+
+Recall checks: measure how well search finds this agent's memories, and whether
+it abstains when nothing answers
+
+Options:
+  -h, --help        display help for command
+
+Global Options:
+  -v, --version     output the version number
+
+Commands:
+  init [options]    Write test questions from memories in the agent's read scope
+                    (adds to an existing set). Needs a generative backend
+  run [options]     Run the question set through search and log the result
+  report [options]  Trend across runs, and the latest run replayed across
+                    abstention thresholds
+  help [command]    display help for command
+
+----- flair check init -----
+Usage: flair check init [options]
+
+Write test questions from memories in the agent's read scope (adds to an
+existing set). Needs a generative backend
+
+Options:
+  --count <n>     Memories to write questions for (default 20, max 50)
+  --decoys <n>    Questions nothing should answer (default 5, max 20)
+  --agent <id>    Agent ID (or set FLAIR_AGENT_ID env)
+  --key <path>    Ed25519 private key path
+  --port <port>   Harper HTTP port
+  --url <url>     Flair base URL (overrides --port)
+  --target <url>  Remote Flair URL (env: FLAIR_TARGET; alias for --url)
+  --json          Output raw JSON
+  -h, --help      display help for command
+
+Global Options:
+  -v, --version   output the version number
+
+----- flair check run -----
+Usage: flair check run [options]
+
+Run the question set through search and log the result
+
+Options:
+  --limit <n>     Results per search (default 10)
+  --agent <id>    Agent ID (or set FLAIR_AGENT_ID env)
+  --key <path>    Ed25519 private key path
+  --port <port>   Harper HTTP port
+  --url <url>     Flair base URL (overrides --port)
+  --target <url>  Remote Flair URL (env: FLAIR_TARGET; alias for --url)
+  --json          Output raw JSON
+  -h, --help      display help for command
+
+Global Options:
+  -v, --version   output the version number
+
+----- flair check report -----
+Usage: flair check report [options]
+
+Trend across runs, and the latest run replayed across abstention thresholds
+
+Options:
+  --last <n>      Runs to show (default 10)
   --agent <id>    Agent ID (or set FLAIR_AGENT_ID env)
   --key <path>    Ed25519 private key path
   --port <port>   Harper HTTP port
