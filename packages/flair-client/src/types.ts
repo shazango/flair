@@ -76,6 +76,8 @@ export interface Memory {
    * the field existed.
    */
   provenance?: string;
+  /** Trust evidence, present only when read with `get(id, { includeTrust: true })`. */
+  trust?: TrustBlock;
   /** Writer-controlled sharing intent. Absent on records written before this
    *  field existed — the server treats absence as "shared" (migration-
    *  invariant: an existing memory keeps reading to exactly whoever holds a
@@ -194,6 +196,57 @@ export interface SearchResult {
   sessionId?: string;
   /** Not returned by search() today: the server's default search projection omits provenance; read it via get()/list(). */
   provenance?: string;
+  /** Trust evidence, present only when searched with `includeTrust: true`. */
+  trust?: TrustBlock;
+}
+
+/**
+ * The server's per-result trust-evidence block (resources/trust-block.ts).
+ * Evidence for the reader to weigh — it never affects access or ranking.
+ */
+export interface TrustBlock {
+  author: string | null;
+  /** "verified" when the server attested the author at write time. */
+  provenanceStatus: "verified" | "unattributed";
+  verifiedAuthor: string | null;
+  verifiedAt: string | null;
+  /** Whether the writer self-reported a model/client (unverified; content not shown). */
+  hasClaimedProvenance: boolean;
+  /** Times other agents reported using this memory; null when none recorded. */
+  usageCount: number | null;
+  validityStatus: "valid" | "expired" | "future";
+  validFrom: string | null;
+  validTo: string | null;
+  createdAt: string | null;
+  updatedAt: string | null;
+  ageDays: number | null;
+  staleDays: number | null;
+  /** Id of the memory this one replaces. */
+  supersedes: string | null;
+  /** How well this result matched the query; null on a by-id read or keyword-only search. */
+  matchQuality: "strong" | "moderate" | "breadcrumb" | null;
+}
+
+export interface SearchOptions {
+  limit?: number;
+  minScore?: number;
+  scoring?: "composite" | "raw";
+  asOf?: string;
+  /** Attach a per-result `trust` evidence block. */
+  includeTrust?: boolean;
+  /** Return nothing, and say so, when no match clears the global confidence threshold. */
+  abstain?: boolean;
+}
+
+/** `searchDetailed()` result: the hits plus the abstention verdict when one was asked for. */
+export interface SearchResponse {
+  results: SearchResult[];
+  /** Present when searched with `abstain: true`. True means nothing cleared the confidence threshold. */
+  abstained?: boolean;
+  /** Best semantic similarity in the candidate pool; null when there was no semantic signal. */
+  bestScore?: number | null;
+  /** The server's global abstention threshold. */
+  threshold?: number;
 }
 
 /** Bootstrap response — formatted context block. */

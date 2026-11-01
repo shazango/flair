@@ -68,8 +68,8 @@ describe("tool descriptors — transport-agnostic source (flair#1580)", () => {
 
   test("stdio omits native-only params FlairClient never forwards", () => {
     const cases: Array<{ name: string; omitted: readonly string[] }> = [
-      { name: "memory_search", omitted: ["includeTrust", "abstain", "includeArchived"] },
-      { name: "memory_get", omitted: ["includeTrust", "includeEmbedding"] },
+      { name: "memory_search", omitted: ["includeArchived"] },
+      { name: "memory_get", omitted: ["includeEmbedding"] },
       {
         name: "bootstrap",
         omitted: ["entities", "includeTrust", "abstain", "includeContext", "maxEvents", "includeEventDetail"],

@@ -189,7 +189,7 @@ See **[DESIGN.md](https://github.com/tpsdev-ai/flair/blob/main/DESIGN.md)** for 
 | **Web admin** | Server-rendered UI for principals, connectors, IdPs and instance config. No separate dashboard service. |
 | **Benchmarks** | [`flair-bench`](https://github.com/tpsdev-ai/flair/blob/main/packages/flair-bench/README.md) scores candidate embedding models against the same recall corpus Flair's CI gates on. Runs standalone — no Flair install, no server. |
 
-Trust-graded recall reaches the authenticated HTTP API and the built-in `/mcp` tools today — the latter being off by default, see [One install, one binary](#one-install-one-binary). CLI, `@tpsdev-ai/flair-client` and `flair-mcp` exposure is a follow-up. REM needs a configured generative backend (Ollama, OpenAI, Anthropic, …) — without one, `flair rem rapid` fails with `Reflection error: No generative backend configured`.
+Trust-graded recall reaches the authenticated HTTP API, the built-in `/mcp` tools (off by default, see [One install, one binary](#one-install-one-binary)), the `flair-mcp` stdio `memory_search`/`memory_get` tools, `@tpsdev-ai/flair-client` (`searchDetailed()`, `get(id, { includeTrust })`) and `flair search --trust --abstain`. Bootstrap exposure outside `/mcp` is a follow-up. REM needs a configured generative backend (Ollama, OpenAI, Anthropic, …) — without one, `flair rem rapid` fails with `Reflection error: No generative backend configured`.
 
 ## How Flair compares
 

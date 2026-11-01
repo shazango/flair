@@ -21,6 +21,9 @@ export type {
   HostSource,
   SoulEntry,
   SearchResult,
+  SearchResponse,
+  SearchOptions,
+  TrustBlock,
   BootstrapResult,
   Relationship,
 } from "./types.js";

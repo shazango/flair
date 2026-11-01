@@ -2,7 +2,7 @@
 # Byte-identical gate for src/cli.ts modularization. Do not edit by hand.
 # Refresh: UPDATE_CLI_SURFACE_SNAPSHOT=1 bun test test/unit-isolated/cli-surface-snapshot.test.ts
 # helpWidth=80 (pinned; TTY columns must not affect this file)
-# commands=153 options=726
+# commands=153 options=728
 #
 # TREE is registration order: every command/subcommand + declared options/args.
 # HELP is each command's outputHelp() (--help, including addHelpText).
@@ -2397,6 +2397,12 @@ flair search
     --explain
       description: Show score breakdown (raw, composite, durability, age, usage) per hit — also added to --json output as _explain
       attr: explain
+    --trust
+      description: Show trust evidence per hit (author verification, match strength, usage, age, validity) — in --json each hit carries `trust`
+      attr: trust
+    --abstain
+      description: Say so instead of listing weak matches when nothing clears the confidence threshold — --json then prints { abstained, bestScore, threshold, results }
+      attr: abstain
     --json
       description: Output raw JSON array
       attr: json
@@ -6054,6 +6060,12 @@ Options:
   --explain                  Show score breakdown (raw, composite, durability,
                              age, usage) per hit — also added to --json output
                              as _explain
+  --trust                    Show trust evidence per hit (author verification,
+                             match strength, usage, age, validity) — in --json
+                             each hit carries `trust`
+  --abstain                  Say so instead of listing weak matches when nothing
+                             clears the confidence threshold — --json then
+                             prints { abstained, bestScore, threshold, results }
   --json                     Output raw JSON array
   -h, --help                 display help for command
 

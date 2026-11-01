@@ -22,6 +22,8 @@ import type {
   HostSource,
   SoulEntry,
   SearchResult,
+  SearchResponse,
+  SearchOptions,
   BootstrapResult,
   Relationship,
   TeamDirectoryResult,
@@ -737,13 +739,27 @@ class MemoryApi {
   }
 
   /** Search memories by meaning. Optionally filter to facts valid at a specific point in time. */
-  async search(query: string, opts: { limit?: number; minScore?: number; scoring?: "composite" | "raw"; asOf?: string } = {}): Promise<SearchResult[]> {
-    const result = await this.client.request<{ results?: unknown[] }>(
-      "POST", "/SemanticSearch",
-      { agentId: this.client.agentId, q: query, limit: opts.limit ?? 5, scoring: opts.scoring, asOf: opts.asOf },
+  async search(query: string, opts: SearchOptions = {}): Promise<SearchResult[]> {
+    return (await this.searchDetailed(query, opts)).results;
+  }
+
+  /**
+   * search(), plus the abstention verdict. With `abstain: true` the server
+   * returns no results when nothing clears its global confidence threshold,
+   * and `abstained` says so (an empty `results` alone can't tell "nothing
+   * stored" from "nothing confident"). With `includeTrust: true` each result
+   * carries a `trust` evidence block. Both are forwarded only when true, so a
+   * plain search sends the same body as before.
+   */
+  async searchDetailed(query: string, opts: SearchOptions = {}): Promise<SearchResponse> {
+    const body: Record<string, unknown> = { agentId: this.client.agentId, q: query, limit: opts.limit ?? 5, scoring: opts.scoring, asOf: opts.asOf };
+    if (opts.includeTrust === true) body.includeTrust = true;
+    if (opts.abstain === true) body.abstain = true;
+    const result = await this.client.request<{ results?: unknown[]; abstained?: boolean; bestScore?: number | null; threshold?: number }>(
+      "POST", "/SemanticSearch", body,
     );
     const minScore = opts.minScore ?? 0;
-    return (result.results ?? [])
+    const results = (result.results ?? [])
       .map((r: any) => ({
         id: r.id ?? r.memory?.id ?? "",
         content: r.content ?? r.memory?.content ?? "",
@@ -758,13 +774,20 @@ class MemoryApi {
         hostSource: r.hostSource ?? r.memory?.hostSource,
         sessionId: r.sessionId ?? r.memory?.sessionId,
         provenance: r.provenance ?? r.memory?.provenance,
+        ...(r.trust ? { trust: r.trust } : {}),
       }))
       .filter((r) => r.score >= minScore);
+    const response: SearchResponse = { results };
+    if (typeof result.abstained === "boolean") response.abstained = result.abstained;
+    if (result.bestScore !== undefined) response.bestScore = result.bestScore;
+    if (typeof result.threshold === "number") response.threshold = result.threshold;
+    return response;
   }
 
-  /** Get a memory by ID. */
-  async get(id: string): Promise<Memory | null> {
-    try { return await this.client.request("GET", `/Memory/${encodeRecordId(id)}`); }
+  /** Get a memory by ID. `includeTrust: true` attaches its trust evidence block. */
+  async get(id: string, opts: { includeTrust?: boolean } = {}): Promise<Memory | null> {
+    const query = opts.includeTrust === true ? "?includeTrust=true" : "";
+    try { return await this.client.request("GET", `/Memory/${encodeRecordId(id)}${query}`); }
     catch (e) {
       if (e instanceof FlairError && e.status === 404) return null;
       throw e;

@@ -20,6 +20,7 @@ import { classifyError } from "./errors.js";
 import { jsonSchemaToZodShape } from "./json-schema-zod.js";
 import { deriveActivity, type PresenceActivity } from "./presence.js";
 import { buildRecordUsageBody, citationIds, withCiteNudge } from "./usage.js";
+import { formatAbstention, formatTrustLine } from "./trust.js";
 import {
   buildSkillSearchBody,
   buildSkillStoreBody,
@@ -48,10 +49,14 @@ function errorResult(err: unknown, flairUrl: string): ToolResult {
   return { content: [{ type: "text", text: classifyError(err, flairUrl) }], isError: true };
 }
 
-const memory_search: StdioHandler = async ({ query, limit }, { flair, heartbeat }) => {
+const memory_search: StdioHandler = async ({ query, limit, includeTrust, abstain }, { flair, heartbeat }) => {
   heartbeat();
   try {
-    const results = await flair.memory.search(query, { limit: limit ?? 5 });
+    const res = await flair.memory.searchDetailed(query, { limit: limit ?? 5, includeTrust, abstain });
+    if (res.abstained) {
+      return { content: [{ type: "text", text: formatAbstention(res) }] };
+    }
+    const results = res.results;
     if (results.length === 0) {
       return { content: [{ type: "text", text: "No relevant memories found." }] };
     }
@@ -60,7 +65,8 @@ const memory_search: StdioHandler = async ({ query, limit }, { flair, heartbeat 
         const date = r.createdAt ? r.createdAt.slice(0, 10) : "";
         const idStr = r.id ? `id:${r.id}` : "";
         const meta = [date, r.type, idStr].filter(Boolean).join(", ");
-        return `${i + 1}. ${r.content}${meta ? ` (${meta})` : ""}`;
+        const trust = r.trust ? `\n   ${formatTrustLine(r.trust)}` : "";
+        return `${i + 1}. ${r.content}${meta ? ` (${meta})` : ""}${trust}`;
       })
       .join("\n");
     return { content: [{ type: "text", text: withCiteNudge(text) }] };
@@ -243,12 +249,13 @@ const memory_update: StdioHandler = async (
   }
 };
 
-const memory_get: StdioHandler = async ({ id }, { flair, heartbeat }) => {
+const memory_get: StdioHandler = async ({ id, includeTrust }, { flair, heartbeat }) => {
   heartbeat();
   try {
-    const mem = await flair.memory.get(id);
+    const mem = await flair.memory.get(id, includeTrust === true ? { includeTrust: true } : {});
     if (!mem) return { content: [{ type: "text", text: `Memory ${id} not found.` }] };
-    return { content: [{ type: "text", text: `${mem.content}\n\n(type: ${mem.type}, durability: ${mem.durability}, created: ${mem.createdAt})` }] };
+    const trust = mem.trust ? `\n${formatTrustLine(mem.trust)}` : "";
+    return { content: [{ type: "text", text: `${mem.content}\n\n(type: ${mem.type}, durability: ${mem.durability}, created: ${mem.createdAt})${trust}` }] };
   } catch (err) {
     return errorResult(err, flair.url);
   }

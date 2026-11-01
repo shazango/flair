@@ -11,6 +11,7 @@ import { buildEd25519Auth, requestTarget, requestUrl, resolveKeyPath } from "../
 import * as render from "../render.js";
 import { join } from "node:path";
 import { DURABILITY_CAVEAT } from "../lib/durability-copy.js";
+import { formatAbstentionSummary, formatTrustSummary } from "../lib/trust-summary.js";
 
 export type SearchCli = {
   resolveBaseUrl: (...args: any[]) => any;
@@ -167,6 +168,8 @@ program
   .option("--source <name>", "Filter by source/agentId (client-side)")
   // Output modes
   .option("--explain", "Show score breakdown (raw, composite, durability, age, usage) per hit — also added to --json output as _explain")
+  .option("--trust", "Show trust evidence per hit (author verification, match strength, usage, age, validity) — in --json each hit carries `trust`")
+  .option("--abstain", "Say so instead of listing weak matches when nothing clears the confidence threshold — --json then prints { abstained, bestScore, threshold, results }")
   .option("--json", "Output raw JSON array")
   .action(async (query, opts) => {
     try {
@@ -199,6 +202,8 @@ program
       if (opts.includeSuperseded) payload.includeSuperseded = true;
       const minScore = Number.parseFloat(opts.minScore ?? "0");
       if (Number.isFinite(minScore) && minScore > 0) payload.minScore = minScore;
+      if (opts.trust) payload.includeTrust = true;
+      if (opts.abstain) payload.abstain = true;
 
       const res = await fetch(url, {
         method: "POST",
@@ -232,7 +237,16 @@ program
         const out = opts.explain
           ? results.map((r) => ({ ...r, _explain: buildSearchExplain(r, scoringMode) }))
           : results;
-        console.log(render.asJSON(out));
+        // --abstain opts into an object so the verdict travels with the hits;
+        // without it the output stays the plain array.
+        console.log(render.asJSON(opts.abstain
+          ? { abstained: result.abstained === true, bestScore: result.bestScore ?? null, threshold: result.threshold ?? null, results: out }
+          : out));
+        return;
+      }
+
+      if (result.abstained === true) {
+        console.log(`${render.icons.info} ${render.wrap(render.c.dim, formatAbstentionSummary(result))}`);
         return;
       }
 
@@ -275,6 +289,9 @@ program
         const meta = metaParts.join(render.wrap(render.c.dim, " · "));
         console.log(`  ${r.content}`);
         if (meta) console.log(`  ${render.wrap(render.c.dim, "(")} ${meta} ${render.wrap(render.c.dim, ")")}`);
+        if (r.trust) {
+          console.log(`    ${render.wrap(render.c.gray, "└─")} ${render.wrap(render.c.dim, `trust: ${formatTrustSummary(r.trust)}`)}`);
+        }
         if (opts.explain) {
           const line = formatSearchExplain(buildSearchExplain(r, scoringMode), r);
           if (line) {

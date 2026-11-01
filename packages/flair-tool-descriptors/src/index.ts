@@ -145,8 +145,6 @@ export const TOOL_DESCRIPTORS: readonly ToolDescriptor[] = [
       "readOnlyHint": true
     },
     "stdioOmitProperties": [
-      "includeTrust",
-      "abstain",
       "includeArchived"
     ]
   },
@@ -413,7 +411,6 @@ export const TOOL_DESCRIPTORS: readonly ToolDescriptor[] = [
       "readOnlyHint": true
     },
     "stdioOmitProperties": [
-      "includeTrust",
       "includeEmbedding"
     ]
   },
