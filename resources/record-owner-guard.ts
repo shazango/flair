@@ -136,6 +136,7 @@ export const OWNER_GUARD_EXEMPT: Readonly<Record<string, string>> = Object.freez
   // Confirmations/refinements ledger: no REST surface; its only writer
   // (resources/outcome-recording.ts) stamps agentId from the verified caller.
   MemoryOutcome: "no REST surface; the only writer stamps agentId from the verified caller",
+  GuidanceDraft: "no REST surface and no owner; only admin routes write it",
 });
 
 /** The verbs that can mutate a record, and therefore need the rule applied. */

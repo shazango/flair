@@ -2,7 +2,7 @@
 # Byte-identical gate for src/cli.ts modularization. Do not edit by hand.
 # Refresh: UPDATE_CLI_SURFACE_SNAPSHOT=1 bun test test/unit-isolated/cli-surface-snapshot.test.ts
 # helpWidth=80 (pinned; TTY columns must not affect this file)
-# commands=157 options=740
+# commands=161 options=748
 #
 # TREE is registration order: every command/subcommand + declared options/args.
 # HELP is each command's outputHelp() (--help, including addHelpText).
@@ -3202,7 +3202,7 @@ flair guidance
   description: Guidance for agents, from refinements
   usage: [options] [command]
   options: (none)
-  subcommands: areas
+  subcommands: areas, scan, drafts, promote, reject
 
 flair guidance areas
   description: Operators: which areas draw refinements and whether guidance exists for them (admin credentials)
@@ -3210,6 +3210,57 @@ flair guidance areas
   options:
     --json
       description: Output the raw /GuidanceAreas response
+      attr: json
+
+flair guidance scan
+  description: Operators: propose refinement links and lesson drafts for review (admin credentials; the nightly REM run does this when it has them)
+  usage: [options]
+  options:
+    --json
+      description: Output the raw /GuidanceScan response
+      attr: json
+
+flair guidance drafts
+  description: Operators: list guidance drafts waiting for review (admin credentials)
+  usage: [options]
+  options:
+    --status <s>
+      description: pending | promoted | rejected | not_a_correction | all
+      attr: status
+      default: "pending"
+    --json
+      description: Output the raw /GuidanceDrafts response
+      attr: json
+
+flair guidance promote
+  description: Operators: make a draft live: a lesson becomes a shared skill, a link becomes a recorded refinement (admin credentials)
+  usage: [options] <draft-id>
+  arguments:
+    draft-id (required)
+  options:
+    --rationale <text>
+      description: Why it is being promoted (required, no rubber-stamp)
+      attr: rationale
+      mandatory: true
+    --as <agent-id>
+      description: Lessons: the agent the skill is published under
+      attr: as
+    --json
+      description: Output the raw /GuidanceReview response
+      attr: json
+
+flair guidance reject
+  description: Operators: reject a draft; it is kept, marked rejected (admin credentials)
+  usage: [options] <draft-id>
+  arguments:
+    draft-id (required)
+  options:
+    --rationale <text>
+      description: Why it is being rejected (required, no rubber-stamp)
+      attr: rationale
+      mandatory: true
+    --json
+      description: Output the raw /GuidanceReview response
       attr: json
 
 flair help
@@ -6990,15 +7041,26 @@ Usage: flair guidance [options] [command]
 Guidance for agents, from refinements
 
 Options:
-  -h, --help       display help for command
+  -h, --help                    display help for command
 
 Global Options:
-  -v, --version    output the version number
+  -v, --version                 output the version number
 
 Commands:
-  areas [options]  Operators: which areas draw refinements and whether guidance
-                   exists for them (admin credentials)
-  help [command]   display help for command
+  areas [options]               Operators: which areas draw refinements and
+                                whether guidance exists for them (admin
+                                credentials)
+  scan [options]                Operators: propose refinement links and lesson
+                                drafts for review (admin credentials; the
+                                nightly REM run does this when it has them)
+  drafts [options]              Operators: list guidance drafts waiting for
+                                review (admin credentials)
+  promote [options] <draft-id>  Operators: make a draft live: a lesson becomes a
+                                shared skill, a link becomes a recorded
+                                refinement (admin credentials)
+  reject [options] <draft-id>   Operators: reject a draft; it is kept, marked
+                                rejected (admin credentials)
+  help [command]                display help for command
 
 ----- flair guidance areas -----
 Usage: flair guidance areas [options]
@@ -7012,6 +7074,61 @@ Options:
 
 Global Options:
   -v, --version  output the version number
+
+----- flair guidance scan -----
+Usage: flair guidance scan [options]
+
+Operators: propose refinement links and lesson drafts for review (admin
+credentials; the nightly REM run does this when it has them)
+
+Options:
+  --json         Output the raw /GuidanceScan response
+  -h, --help     display help for command
+
+Global Options:
+  -v, --version  output the version number
+
+----- flair guidance drafts -----
+Usage: flair guidance drafts [options]
+
+Operators: list guidance drafts waiting for review (admin credentials)
+
+Options:
+  --status <s>   pending | promoted | rejected | not_a_correction | all
+                 (default: "pending")
+  --json         Output the raw /GuidanceDrafts response
+  -h, --help     display help for command
+
+Global Options:
+  -v, --version  output the version number
+
+----- flair guidance promote -----
+Usage: flair guidance promote [options] <draft-id>
+
+Operators: make a draft live: a lesson becomes a shared skill, a link becomes a
+recorded refinement (admin credentials)
+
+Options:
+  --rationale <text>  Why it is being promoted (required, no rubber-stamp)
+  --as <agent-id>     Lessons: the agent the skill is published under
+  --json              Output the raw /GuidanceReview response
+  -h, --help          display help for command
+
+Global Options:
+  -v, --version       output the version number
+
+----- flair guidance reject -----
+Usage: flair guidance reject [options] <draft-id>
+
+Operators: reject a draft; it is kept, marked rejected (admin credentials)
+
+Options:
+  --rationale <text>  Why it is being rejected (required, no rubber-stamp)
+  --json              Output the raw /GuidanceReview response
+  -h, --help          display help for command
+
+Global Options:
+  -v, --version       output the version number
 
 ----- flair help -----
 Usage: flair help [options] [command...]

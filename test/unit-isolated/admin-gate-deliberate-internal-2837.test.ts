@@ -25,6 +25,7 @@ class NoopBase {
 }
 const dbStub = new Proxy({}, { get: () => NoopBase });
 mock.module("harper", () => ({
+  models: {},
   server: { http: () => {}, getUser: async () => null },
   Resource: NoopBase,
   databases: { flair: dbStub },
@@ -45,6 +46,9 @@ const ADMIN_GATED: Array<{ cls: string; module: string; methods: string[] }> = [
   { cls: "AdminMemoryCandidates", module: "AdminMemoryCandidates.ts", methods: ["allowRead"] },
   { cls: "AdminPrincipals", module: "AdminPrincipals.ts", methods: ["allowRead"] },
   { cls: "GuidanceAreas", module: "GuidanceAreas.ts", methods: ["allowCreate"] },
+  { cls: "GuidanceDrafts", module: "GuidanceDrafts.ts", methods: ["allowCreate"] },
+  { cls: "GuidanceReview", module: "GuidanceReview.ts", methods: ["allowCreate"] },
+  { cls: "GuidanceScan", module: "GuidanceScan.ts", methods: ["allowCreate"] },
   { cls: "Agent", module: "Agent.ts", methods: ["allowCreate", "allowDelete"] },
   { cls: "AgentKeyRegistration", module: "AgentKeyRegistration.ts", methods: ["allowRead"] },
   { cls: "AgentSeed", module: "AgentSeed.ts", methods: ["allowCreate"] },

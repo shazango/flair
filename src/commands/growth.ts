@@ -80,9 +80,11 @@ export function register(program: Command): void {
       }
     });
 
-  program
+  const guidance = program
     .command("guidance")
-    .description("Guidance for agents, from refinements")
+    .description("Guidance for agents, from refinements");
+
+  guidance
     .command("areas")
     .description("Operators: which areas draw refinements and whether guidance exists for them (admin credentials)")
     .option("--json", "Output the raw /GuidanceAreas response")
@@ -95,4 +97,83 @@ export function register(program: Command): void {
         process.exit(1);
       }
     });
+
+  guidance
+    .command("scan")
+    .description("Operators: propose refinement links and lesson drafts for review (admin credentials; the nightly REM run does this when it has them)")
+    .option("--json", "Output the raw /GuidanceScan response")
+    .action(async (opts) => {
+      await adminCall("Guidance scan", "/GuidanceScan", {}, opts, formatScan);
+    });
+
+  guidance
+    .command("drafts")
+    .description("Operators: list guidance drafts waiting for review (admin credentials)")
+    .option("--status <s>", "pending | promoted | rejected | not_a_correction | all", "pending")
+    .option("--json", "Output the raw /GuidanceDrafts response")
+    .action(async (opts) => {
+      await adminCall("Guidance drafts", "/GuidanceDrafts", { status: opts.status }, opts, formatDrafts);
+    });
+
+  const review = (decision: "promote" | "reject") => async (draftId: string, opts: any) => {
+    await adminCall(`Guidance ${decision}`, "/GuidanceReview", { draftId, decision, rationale: opts.rationale, ...(opts.as ? { agentId: opts.as } : {}) }, opts,
+      (r: any) => `${render.icons.ok} ${draftId}: ${r.status}${r.memoryId ? ` (skill ${r.memoryId})` : ""}`);
+  };
+
+  guidance
+    .command("promote <draft-id>")
+    .description("Operators: make a draft live: a lesson becomes a shared skill, a link becomes a recorded refinement (admin credentials)")
+    .requiredOption("--rationale <text>", "Why it is being promoted (required, no rubber-stamp)")
+    .option("--as <agent-id>", "Lessons: the agent the skill is published under")
+    .option("--json", "Output the raw /GuidanceReview response")
+    .action(review("promote"));
+
+  guidance
+    .command("reject <draft-id>")
+    .description("Operators: reject a draft; it is kept, marked rejected (admin credentials)")
+    .requiredOption("--rationale <text>", "Why it is being rejected (required, no rubber-stamp)")
+    .option("--json", "Output the raw /GuidanceReview response")
+    .action(review("reject"));
+}
+
+async function adminCall(label: string, path: string, body: unknown, opts: any, format: (r: any) => string): Promise<void> {
+  try {
+    const result = await cli.api("POST", path, body, { agentId: null });
+    if (result?.error) throw new Error(result.error);
+    console.log(render.resolveOutputMode(opts) === "json" ? render.asJSON(result) : format(result));
+  } catch (err: any) {
+    console.error(`${render.icons.error} ${label} failed: ${err.message}`);
+    process.exit(1);
+  }
+}
+
+/** Plain-text rendering of a POST /GuidanceScan result (exported for tests). */
+export function formatScan(r: any): string {
+  if (r?.skipped === "no_backend") return "Guidance scan skipped: no LLM backend is configured.";
+  const lines = [
+    `Proposed ${r.linksProposed} refinement link${r.linksProposed === 1 ? "" : "s"} and ${r.lessonsDrafted} lesson${r.lessonsDrafted === 1 ? "" : "s"}.`,
+  ];
+  if (r.notCorrections > 0) lines.push(`${r.notCorrections} newer version${r.notCorrections === 1 ? " was an update" : "s were updates"}, not corrections.`);
+  if (r.failed > 0) lines.push(`${r.failed} could not be judged (the LLM reply was not usable); the next scan retries them.`);
+  if (r.linksProposed + r.lessonsDrafted > 0) lines.push("Review: flair guidance drafts");
+  return lines.join("\n");
+}
+
+/** Plain-text rendering of a POST /GuidanceDrafts result (exported for tests). */
+export function formatDrafts(r: any): string {
+  const drafts: any[] = r?.drafts ?? [];
+  if (drafts.length === 0) return "No drafts.";
+  const lines: string[] = [];
+  for (const d of drafts) {
+    lines.push(`${d.id}  [${d.kind}, ${d.status}]`);
+    if (d.kind === "lesson") {
+      lines.push(`  area: ${d.area} (from ${d.refinementCount} refinements)`, `  trigger: ${d.trigger}`, `  lesson: ${d.content}`);
+    } else {
+      lines.push(`  earlier (${d.memoryId}): ${d.earlier ?? "(gone)"}`, `  later (${d.refinementMemoryId}): ${d.later ?? "(gone)"}`, `  why a correction: ${d.content}`);
+    }
+    if (d.reviewRationale) lines.push(`  decided by ${d.reviewerId}: ${d.reviewRationale}`);
+    lines.push("");
+  }
+  lines.push('Decide: flair guidance promote <id> --rationale "…" [--as <agent>]   |   flair guidance reject <id> --rationale "…"');
+  return lines.join("\n");
 }

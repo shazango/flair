@@ -119,14 +119,14 @@ export function summarizeGrowth(agentId: string, rows: readonly LedgerRow[], mem
 }
 
 // ponytail: full scans of the ledger and the skill rows, and one Memory.get per
-// distinct ledger memory. Fine while the ledger is thousands of rows; past that,
-// keep per-area counts in a nightly REM step instead of computing per request.
-async function load() {
+// memory the ledger names (refined and refinement). Fine while the ledger is
+// thousands of rows; past that, keep per-area counts in the nightly scan instead.
+export async function loadLedger() {
   const db = (databases as any).flair;
   const rows: LedgerRow[] = [];
   for await (const r of db.MemoryOutcome.search({})) rows.push(r);
   const memories = new Map<string, any>();
-  for (const id of new Set(rows.map((r) => r.memoryId))) {
+  for (const id of new Set(rows.flatMap((r) => (r.refinementMemoryId ? [r.memoryId, r.refinementMemoryId] : [r.memoryId])))) {
     const m = await db.Memory.get(id).catch(() => null);
     if (m) memories.set(id, m);
   }
@@ -138,12 +138,12 @@ async function load() {
 }
 
 export async function guidanceAreas() {
-  const { rows, memories, skills } = await load();
+  const { rows, memories, skills } = await loadLedger();
   return { ...summarizeAreas(rows, memories, skills), computedAt: new Date().toISOString() };
 }
 
 export async function growthFor(agentId: string) {
-  const { rows, memories, skills } = await load();
+  const { rows, memories, skills } = await loadLedger();
   const scope = await resolveReadScope(agentId);
   return summarizeGrowth(agentId, rows, memories, skills.filter((s) => scope.isAllowed(s)));
 }

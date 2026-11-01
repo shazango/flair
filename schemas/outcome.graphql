@@ -20,3 +20,35 @@ type MemoryOutcome @table(database: "flair") {
   refinementMemoryId: String @indexed  # kind "refined" only
   createdAt: String!
 }
+
+# GuidanceDraft — proposals from the guidance scan (slice 5b; resources/GuidanceScan.ts),
+# waiting for an operator. Nothing here is live until reviewed: promoting needs a
+# rationale (POST /GuidanceReview), and rejected drafts are kept.
+#
+#   kind "link"   — `refinementMemoryId` supersedes `memoryId` and the model judged it
+#                   a correction. Promoting records the refinement in MemoryOutcome,
+#                   reported by the successor's author. id `link:${refinementMemoryId}`.
+#                   A successor judged an update is kept as status "not_a_correction".
+#   kind "lesson" — a lesson for `area`, drafted from `refinementCount` shared
+#                   refinements. Promoting writes a shared skill (tags ["skill"],
+#                   `trigger`, subject `area`). id `lesson:${area}:${refinementCount}`.
+#
+# No REST surface and no agent role grant; admin-only routes read and write it.
+type GuidanceDraft @table(database: "flair") {
+  id: ID @primaryKey
+  kind: String!                        # "link" | "lesson"
+  status: String! @indexed             # pending | promoted | rejected | not_a_correction
+  memoryId: String                     # link: the earlier memory
+  refinementMemoryId: String           # link: the later one that corrects it
+  area: String                         # lesson
+  trigger: String                      # lesson: when it applies
+  content: String                      # lesson text, or the link verdict's reason
+  sourceMemoryIds: [String]            # lesson: the memories it was drafted from
+  refinementCount: Int                 # lesson: refinements behind the draft
+  generatedBy: String                  # logical model name
+  generatedAt: String!
+  reviewerId: String
+  reviewRationale: String
+  decidedAt: String
+  promotedMemoryId: String             # lesson: the skill written on promote
+}

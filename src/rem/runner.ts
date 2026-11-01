@@ -1321,6 +1321,12 @@ export async function runNightlyCycle(opts: RunnerOpts): Promise<RunnerResult> {
     }
   }
 
+  // Outcome engine guidance scan (docs/growth.md): proposes drafts
+  // for operator review, applies nothing. Admin-only, so it runs only with admin credentials.
+  if (!opts.dryRun && !distillAborted && opts.adminApiCall) {
+    try { await opts.adminApiCall("POST", "/GuidanceScan", {}); } catch (err: any) { errors.push(`guidance: ${describeApiError(err)}`); }
+  }
+
   // Step 7: log
   if (distillAborted) {
     distill = {

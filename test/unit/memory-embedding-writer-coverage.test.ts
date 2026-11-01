@@ -154,6 +154,8 @@ add("Federation", [
 add("MemoryReflect", ["writer:(databases as any).flair.MemoryCandidate.put#1"], "OTHER_TABLE", "MemoryCandidate table.");
 add("usage-recording", ["writer:(databases as any).flair.MemoryUsage.put#1"], "OTHER_TABLE", "MemoryUsage table.");
 add("outcome-recording", ["writer:(databases as any).flair.MemoryOutcome.put#1"], "OTHER_TABLE", "MemoryOutcome table.");
+add("GuidanceReview", ["writer:(Memory as any).put#1"], "DELEGATED", "The promoted lesson is written through Memory.put().");
+add("GuidanceScan", ["writer:(databases as any).flair.GuidanceDraft.put#1"], "OTHER_TABLE", "GuidanceDraft table.");
 
 function enumerateWriterSites() {
   return [...new Glob("resources/**/*.ts").scanSync(".")]

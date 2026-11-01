@@ -182,6 +182,8 @@ for (const [file, alias] of [
 ]) {
   add(file, [alias], "SERVER: a table handle; its writes, if any, are the sites classified above.");
 }
+add("GuidanceReview", ["writer:(Memory as any).put#1"], "SERVER: Memory.put() with a server-minted guidance-<uuid> id.");
+add("GuidanceScan", ["writer:(databases as any).flair.GuidanceDraft.put#1"], "SERVER: another table.");
 
 test("raw Memory write sites detected by the inventory are classified for the reserved seed id", () => {
   const sites = [...new Glob("{resources,src}/**/*.ts").scanSync(".")].flatMap((file) => rawTableWriteSites(file, readFileSync(file, "utf8"), "Memory"));

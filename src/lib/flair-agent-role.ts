@@ -76,6 +76,8 @@ export const FLAIR_AGENT_PERMISSION = {
       MemoryHitStat:   grant(false, false, false, false),
       // MemoryOutcome: confirmations/refinements ledger. Internal only (schemas/outcome.graphql).
       MemoryOutcome:   grant(false, false, false, false),
+      // GuidanceDraft: guidance-scan proposals. Admin routes only (schemas/outcome.graphql).
+      GuidanceDraft:   grant(false, false, false, false),
       // Agent: read for discovery, update own card; creation/removal is admin.
       Agent:           grant(true,  false, true,  false),
       // Read-only reference data.
