@@ -24,6 +24,7 @@ export const TPS_GET_ROUTE_STATUS: Record<string, number | readonly number[]> = 
   AgentKeyRegistration: 403,
   AgentReadPosition: 400,
   AgentSeed: 404,
+  Ask: 404,
   Asset: 200,
   AttentionQuery: 404,
   AutoPromoteCandidates: 404,

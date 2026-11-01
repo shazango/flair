@@ -25,6 +25,7 @@ const getOutcomes: Array<[string, number | readonly number[], string]> = [
   ["AgentKeyRegistration", 403, "resources/AgentKeyRegistration.ts:16: allowRead allowAdmin refuses; inherited table get/search"],
   ["AgentReadPosition", 400, "resources/AgentReadPosition.ts:48: allowRead allowVerified; get:56 requires path agentId; no search"],
   ["AgentSeed", 404, "resources/AgentSeed.ts:48: no get/search/allowRead override"],
+  ["Ask", 404, "resources/Ask.ts:43: no get/search/allowRead override"],
   ["Asset", 200, "resources/Asset.ts:59: verified read gate; get:61 delegates collection to scoped search:68"],
   ["AttentionQuery", 404, "resources/AttentionQuery.ts:403: no get/search/allowRead override"],
   ["AutoPromoteCandidates", 404, "resources/AutoPromoteCandidates.ts:59: no get/search/allowRead override"],

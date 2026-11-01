@@ -421,6 +421,10 @@ import {
   register as registerCheck,
 } from "./commands/check.js";
 import {
+  bindCli as bindAskCli,
+  register as registerAsk,
+} from "./commands/ask.js";
+import {
   bindCli as bindBootstrapCli,
   register as registerBootstrap,
 } from "./commands/bootstrap.js";
@@ -9197,6 +9201,14 @@ bindCheckCli({
   resolveSigningAgentId,
 });
 registerCheck(program);
+
+// ─── flair ask ──────────────────────────────────────────────────────────────────
+// Answers from memory live in src/commands/ask.ts.
+bindAskCli({
+  resolveBaseUrl,
+  resolveSigningAgentId,
+});
+registerAsk(program);
 
 // ─── flair help ──────────────────────────────────────────────────────────────
 // Command registration lives in src/commands/help.ts (flair#2887).
