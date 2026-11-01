@@ -145,6 +145,7 @@ describe("MCP surface tripwire — RECORD_TYPES.mcp + COMPOSITE_MCP_TOOLS vs. re
         "memory_search",
         "memory_store",
         "memory_update",
+        "record_outcome",
         "record_usage",
         "skill_get",
         "skill_search",
@@ -155,8 +156,8 @@ describe("MCP surface tripwire — RECORD_TYPES.mcp + COMPOSITE_MCP_TOOLS vs. re
       ]);
     });
 
-    it("the declared surface (registry verbs ∪ composites) also totals exactly 18 unique names", () => {
-      expect(declaredToolNames().size).toBe(18);
+    it("the declared surface (registry verbs ∪ composites) also totals exactly 19 unique names", () => {
+      expect(declaredToolNames().size).toBe(19);
     });
   });
 

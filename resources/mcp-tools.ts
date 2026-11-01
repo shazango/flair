@@ -66,7 +66,7 @@ import {
 } from "./tool-descriptors/index.js";
 export type { McpToolDef };
 
-type HandlerKey = "SemanticSearch" | "Memory" | "BootstrapMemories" | "Soul" | "WorkspaceState" | "OrgEvent" | "AttentionQuery" | "RecordUsage";
+type HandlerKey = "SemanticSearch" | "Memory" | "BootstrapMemories" | "Soul" | "WorkspaceState" | "OrgEvent" | "AttentionQuery" | "RecordUsage" | "RecordOutcome";
 const H: Partial<Record<HandlerKey, any>> = {};
 
 const LOADERS: Record<HandlerKey, () => Promise<any>> = {
@@ -78,6 +78,7 @@ const LOADERS: Record<HandlerKey, () => Promise<any>> = {
   OrgEvent: async () => (await import("./OrgEvent.js")).OrgEvent,
   AttentionQuery: async () => (await import("./AttentionQuery.js")).AttentionQuery,
   RecordUsage: async () => (await import("./RecordUsage.js")).RecordUsage,
+  RecordOutcome: async () => (await import("./RecordOutcome.js")).RecordOutcome,
 };
 
 /** Resolve a handler class — from the test override if set, else lazy-load + cache. */
@@ -883,6 +884,13 @@ async function recordUsage(agent: ResolvedAgent, args: any) {
   return unwrap(await h.post({ memoryIds, attribution: args?.attribution }));
 }
 
+/** record_outcome — confirmations and refinements (resources/RecordOutcome.ts). */
+async function recordOutcome(agent: ResolvedAgent, args: any) {
+  const Cls = await handler("RecordOutcome");
+  const h = new Cls(undefined, delegationContext(agent));
+  return unwrap(await h.post({ memoryId: args?.memoryId, kind: args?.kind, refinementMemoryId: args?.refinementMemoryId }));
+}
+
 type ToolImpl = (agent: ResolvedAgent, args: any) => Promise<any>;
 
 async function teamDirectory(agent: ResolvedAgent, args: any) {
@@ -1609,6 +1617,15 @@ export const TOOLS: Record<string, ToolEntry> = bindNativeTools({
         impl: recordUsage,
     contract: {
       summary: "Invariant acknowledgement { recorded:true } — byte-identical regardless of how many ids counted (no id enumeration, Sherlock).",
+      requiredFields: ["recorded"],
+      fieldTypes: { recorded: "boolean" },
+      invariants: { fullyResolved: true },
+    },
+  },
+  record_outcome: {
+        impl: recordOutcome,
+    contract: {
+      summary: "Invariant acknowledgement { recorded:true } — identical whether or not the memory exists or is visible to you (no id enumeration). A refinement that is not another memory you wrote is an error.",
       requiredFields: ["recorded"],
       fieldTypes: { recorded: "boolean" },
       invariants: { fullyResolved: true },

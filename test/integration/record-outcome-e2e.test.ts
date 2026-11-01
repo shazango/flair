@@ -134,7 +134,15 @@ describe("POST /RecordOutcome (real Harper)", () => {
     await outcome(peer, { memoryId, kind: "confirmed" });
     const { source } = await askSourceFor(reader, memoryId);
     expect(source, "ask must return the memory").toBeTruthy();
-    expect(source.confirmedBy).toBe(2); // reader (previous test) + peer
+    expect(source.trust.confirmedBy).toBe(2); // reader (previous test) + peer
+  });
+
+  test("search carries confirmations in the trust block, and only with includeTrust", async () => {
+    const client = clients.get(reader.id)!;
+    const withTrust = await client.memory.searchDetailed(QUESTION, { includeTrust: true, limit: 10 });
+    expect(withTrust.results.find((r) => r.id === memoryId)?.trust?.confirmedBy).toBe(2);
+    const plain = await client.memory.searchDetailed(QUESTION, { limit: 10 });
+    expect(plain.results.find((r) => r.id === memoryId)).not.toHaveProperty("trust");
   });
 
   test("a refinement comes forward only for readers who can read it", async () => {
@@ -149,7 +157,7 @@ describe("POST /RecordOutcome (real Harper)", () => {
     expect(asPeer.source.refinedBy).toEqual([nOf(asPeer.sources, peerRefinementId)]);
     expect(asPeer.sources.map((s: any) => s.id)).not.toContain(readerPrivateRefinementId);
     // The refined memory keeps its standing: still returned, still confirmed.
-    expect(asPeer.source.confirmedBy).toBe(2);
+    expect(asPeer.source.trust.confirmedBy).toBe(2);
   });
 
   test("the ledger has no REST read", async () => {

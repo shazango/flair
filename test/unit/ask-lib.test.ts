@@ -104,7 +104,7 @@ describe("formatAskResult", () => {
     const text = formatAskResult({
       abstained: false, answer: "Rotate, then re-wire clients [3].", citations: [3],
       sources: [
-        { ...sources[0], confirmedBy: 2, refinedBy: [3] },
+        { ...sources[0], refinedBy: [3] },
         sources[1],
         { n: 3, id: "m-3", content: "Also re-run flair init after rotating.", createdAt: null, trust: null, refines: 1 },
       ],
@@ -117,9 +117,10 @@ describe("formatAskResult", () => {
   it("lists a refinement under the memory it refines when both are shown", () => {
     const text = formatAskResult({
       abstained: false, answer: "Rotate [1].", citations: [1],
-      sources: [{ ...sources[0], confirmedBy: 2, refinedBy: [3] }, { n: 3, id: "m-3", content: "Also re-run init.", trust: null, refines: 1 }],
+      sources: [{ ...sources[0], trust: { ...sources[0].trust, confirmedBy: 2 }, refinedBy: [3] }, { n: 3, id: "m-3", content: "Also re-run init.", trust: null, refines: 1 }],
     });
-    expect(text).toContain("· steady (confirmed by 2) · m-1\n[3] Also re-run init.");
+    expect(text).toContain("· 3d old · m-1\n[3] Also re-run init.");
+    expect(text).toContain("steady (confirmed by 2)");
     expect(text).toContain("Held up?  flair ask --confirm m-1,m-3\n");
   });
 

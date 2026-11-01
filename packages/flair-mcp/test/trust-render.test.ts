@@ -25,6 +25,9 @@ describe("formatTrustLine", () => {
   test("renders the evidence in one line", () => {
     expect(formatTrustLine(TRUST)).toBe("trust: strong match · verified author agent-b · used 3× · 12d old, updated 2d ago · replaces m0");
   });
+  test("shows others' confirmations as steady", () => {
+    expect(formatTrustLine({ ...TRUST, confirmedBy: 4 })).toContain("used 3× · steady (confirmed by 4) · 12d old");
+  });
   test("handles a sparse block", () => {
     const sparse = { ...TRUST, provenanceStatus: "unattributed", verifiedAuthor: null, usageCount: null, ageDays: null, supersedes: null, matchQuality: null, validityStatus: "expired", validTo: "2026-09-01T00:00:00Z" };
     expect(formatTrustLine(sparse)).toBe("trust: author unattributed · no longer valid since 2026-09-01");

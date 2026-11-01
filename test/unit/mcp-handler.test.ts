@@ -260,6 +260,7 @@ const restoreHandlers = __setHandlers({
   OrgEvent: makeHandlerMock("OrgEvent.post", "post"),
   AttentionQuery: makeHandlerMock("AttentionQuery.post", "post"),
   RecordUsage: makeHandlerMock("RecordUsage.post", "post"),
+  RecordOutcome: makeHandlerMock("RecordOutcome.post", "post"),
 });
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -309,6 +310,7 @@ describe("tools/list — the advertised tool definitions", () => {
       "memory_search",
       "memory_store",
       "memory_update",
+      "record_outcome",
       "record_usage",
       "skill_get",
       "skill_search",
@@ -332,7 +334,7 @@ describe("tools/list — the advertised tool definitions", () => {
       expect(names).not.toContain("soul_set");
       // Every other tool is still advertised: the gate removes soul_set only.
       expect(names).toContain("soul_get");
-      expect(names.length).toBe(17);
+      expect(names.length).toBe(18);
     }
   });
 
@@ -969,6 +971,16 @@ describe("tools/call — scopes to the resolved agent (no forging)", () => {
     ));
     expect(lastCall?.resource).toBe("RecordUsage.post");
     expect(lastCall?.args).toEqual({ memoryIds: ["mem-a", "mem-b"], attribution: "grounded the CP-4 spec" });
+    expect(lastCall?.ctx.request.tpsAgent).toBe("agt_bob");
+  });
+
+  it("record_outcome delegates to RecordOutcome.post with the resolved agent's identity — never a forged agentId", async () => {
+    await mcpHandler(post(
+      { jsonrpc: "2.0", id: 1, method: "tools/call", params: { name: "record_outcome", arguments: { memoryId: "mem-a", kind: "refined", refinementMemoryId: "mem-b", agentId: "agt_mallory" } } },
+      { sub: "sub-bob" },
+    ));
+    expect(lastCall?.resource).toBe("RecordOutcome.post");
+    expect(lastCall?.args).toEqual({ memoryId: "mem-a", kind: "refined", refinementMemoryId: "mem-b" });
     expect(lastCall?.ctx.request.tpsAgent).toBe("agt_bob");
   });
 

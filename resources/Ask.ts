@@ -14,9 +14,9 @@
  *   answer     string | null — cites sources as [n]; null when abstained, when there
  *                        are no sources, or when no answer could be written
  *   citations  number[] — the [n] the answer actually cites
- *   sources    [{ n, id, content, createdAt, trust, confirmedBy?, refinedBy?, refines? }]
- *                        — numbered as in the answer. confirmedBy: agents other than
- *                        the author who confirmed it; refinedBy: the n of readable
+ *   sources    [{ n, id, content, createdAt, trust, refinedBy?, refines? }]
+ *                        — numbered as in the answer. trust.confirmedBy: agents other
+ *                        than the author who confirmed it; refinedBy: the n of readable
  *                        refinements; refines: set on a refinement search did not
  *                        return, naming the source it refines (POST /RecordOutcome)
  *   answerUnavailable? "no_backend" | "generate_failed" | "validation_failed" |
@@ -39,30 +39,30 @@ import { reflectModelsGenerate } from "./memory-reflect-models.js";
 import { clampCount } from "./recall-check-lib.js";
 import { buildAskPrompt, generateAnswer, DEFAULT_ASK_LIMIT, MAX_ASK_LIMIT } from "./ask-lib.js";
 import { SemanticSearch } from "./SemanticSearch.js";
-import { outcomesFor } from "./outcome-recording.js";
+import { attachConfirmations, refinementsFor } from "./outcome-recording.js";
 import { attachTrust } from "./trust-block.js";
 
 /**
- * Slice 4: give each source its confirmations (`confirmedBy`, others only) and
- * bring its refinements forward. A readable refinement is cited as `refinedBy`
+ * Slice 4: bring each source's refinements forward (its confirmations are
+ * already in trust.confirmedBy, from search). A readable refinement is cited as `refinedBy`
  * and, if search did not already return it, appended as its own numbered
  * source with `refines` set, so the model answers from it too. Decoration
  * only: a ledger failure leaves the sources as search returned them.
  */
-async function addOutcomes(sources: any[], results: any[], readerId: string | undefined): Promise<void> {
-  let outcomes: Awaited<ReturnType<typeof outcomesFor>>;
+async function addRefinements(sources: any[], readerId: string | undefined): Promise<void> {
+  let refinements: Map<string, any[]>;
   try {
-    outcomes = await outcomesFor(readerId, new Map(results.map((r: any) => [r.id, r.agentId ?? r.trust?.author])));
+    refinements = await refinementsFor(readerId, sources.map((s) => s.id));
   } catch (err) {
     console.error("[Ask] outcome lookup failed; answering without it", { err });
     return;
   }
   const byId = new Map(sources.map((s) => [s.id, s]));
+  const appended: any[] = [];
   for (const source of [...sources]) {
-    const o = outcomes.get(source.id);
-    if (!o) continue;
-    source.confirmedBy = o.confirmedBy;
-    source.refinedBy = o.refinements.map((ref: any) => {
+    const refs = refinements.get(source.id);
+    if (!refs) continue;
+    source.refinedBy = refs.map((ref: any) => {
       let s = byId.get(ref.id);
       if (!s) {
         s = {
@@ -71,10 +71,12 @@ async function addOutcomes(sources: any[], results: any[], readerId: string | un
         };
         sources.push(s);
         byId.set(ref.id, s);
+        appended.push(s);
       }
       return s.n;
     });
   }
+  await attachConfirmations(appended);
 }
 
 function json(status: number, body: unknown): Response {
@@ -115,7 +117,7 @@ export class Ask extends Resource {
       n: i + 1, id: r.id, content: r.content, createdAt: r.createdAt ?? null, trust: r.trust ?? null,
     }));
     if (sources.length === 0) return { abstained: false, answer: null, citations: [], sources, ...base };
-    await addOutcomes(sources, results, auth.kind === "agent" ? auth.agentId : undefined);
+    await addRefinements(sources, auth.kind === "agent" ? auth.agentId : undefined);
 
     // Same #1263 rule as MemoryReflect: never hold the request transaction
     // across a generative call that may take longer than Harper's 30s limit.

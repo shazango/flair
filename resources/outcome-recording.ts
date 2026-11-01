@@ -14,15 +14,16 @@
  * name a memory the reporter wrote: you cannot refine without supplying the
  * improvement.
  *
- * READ (outcomesFor, for POST /Ask). In-process only; there is no REST read of
- * the ledger. A confirmation from the memory's own author is stored but not
+ * READ, in-process only; there is no REST read of the ledger.
+ * attachConfirmations (SemanticSearch with includeTrust) adds trust.confirmedBy;
+ * refinementsFor (POST /Ask) brings refinements forward. A confirmation from the memory's own author is stored but not
  * counted: standing comes from others relying on a memory. A refinement is
  * shown only if the reader can read the refinement memory itself.
  *
- * ponytail: no count is stored on Memory. Readers summarise the ledger rows for
- * the few memories they show (one indexed query). A Memory counter for the
- * search trust block is a later step; it needs the same write protection as
- * the other server-maintained counters.
+ * NO COUNT ON MEMORY, deliberately. A stored counter is only as trustworthy as
+ * every path that can write the Memory row. The ledger has one writer, POST
+ * /RecordOutcome, so readers summarise it instead:
+ * one indexed query for the memories they show (attachConfirmations, ledgerRows).
  */
 import { databases } from "harper";
 import { withOwnedTransaction } from "./request-transaction.js";
@@ -103,19 +104,10 @@ export async function recordOutcome(
   });
 }
 
-/**
- * Ledger summaries for the memories a reader is shown, keyed by memory id.
- * `authors` maps each memory id to its author. Refinements the reader cannot
- * read are dropped; readable ones come back as raw Memory records.
- */
-export async function outcomesFor(
-  readerAgentId: string | undefined,
-  authors: ReadonlyMap<string, string | undefined>,
-): Promise<Map<string, { confirmedBy: number; refinements: any[] }>> {
-  const out = new Map<string, { confirmedBy: number; refinements: any[] }>();
-  const ids = [...authors.keys()];
-  if (ids.length === 0) return out;
+/** All ledger rows for these memory ids, grouped by memory id: ONE indexed query. */
+async function ledgerRows(ids: readonly string[]): Promise<Map<string, OutcomeRow[]>> {
   const rows = new Map<string, OutcomeRow[]>();
+  if (ids.length === 0) return rows;
   // Harper refuses an `or` with fewer than two conditions.
   const query = ids.length === 1
     ? { conditions: [{ attribute: "memoryId", comparator: "equals", value: ids[0] }] }
@@ -124,15 +116,43 @@ export async function outcomesFor(
     if (!rows.has(row.memoryId)) rows.set(row.memoryId, []);
     rows.get(row.memoryId)!.push(row);
   }
+  return rows;
+}
+
+/**
+ * The readable refinements of each memory a reader is shown, keyed by memory
+ * id, as raw Memory records. Refinements the reader cannot read are dropped.
+ */
+export async function refinementsFor(readerAgentId: string | undefined, ids: readonly string[]): Promise<Map<string, any[]>> {
+  const out = new Map<string, any[]>();
+  if (ids.length === 0) return out;
+  const rows = await ledgerRows(ids);
   const scope = readerAgentId ? await resolveReadScope(readerAgentId) : null;
   for (const id of ids) {
-    const summary = summarizeOutcomes(rows.get(id) ?? [], authors.get(id));
     const refinements: any[] = [];
-    for (const refId of summary.refinementIds) {
+    for (const refId of summarizeOutcomes(rows.get(id) ?? [], undefined).refinementIds) {
       const ref = await (databases as any).flair.Memory.get(refId).catch(() => null);
       if (ref && !ref.archived && (!scope || scope.isAllowed(ref))) refinements.push(ref);
     }
-    out.set(id, { confirmedBy: summary.confirmedBy, refinements });
+    out.set(id, refinements);
   }
   return out;
+}
+
+/**
+ * Add `confirmedBy` (others' confirmations; the steady signal) to the trust
+ * block of each result, IN PLACE. Called by SemanticSearch in its response
+ * tail, only when includeTrust is on, after read scope and ranking are done:
+ * it decorates the response and feeds nothing back. A ledger failure leaves
+ * the trust blocks without it. Results must carry `agentId` and a `trust` object.
+ */
+export async function attachConfirmations(results: readonly any[]): Promise<void> {
+  const withTrust = results.filter((r) => r && typeof r.id === "string" && r.trust && typeof r.trust === "object");
+  if (withTrust.length === 0) return;
+  try {
+    const rows = await ledgerRows([...new Set(withTrust.map((r) => r.id))]);
+    for (const r of withTrust) r.trust.confirmedBy = summarizeOutcomes(rows.get(r.id) ?? [], r.agentId ?? r.trust.author).confirmedBy;
+  } catch (err) {
+    console.error("[outcome-recording] confirmation lookup failed; trust blocks left without confirmedBy", { err });
+  }
 }

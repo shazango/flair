@@ -60,8 +60,7 @@ export function formatAskResult(result: any): string {
     const text = String(s.content ?? "").replace(/\s+/g, " ");
     lines.push(`[${s.n}] ${text.length > SNIPPET_CHARS ? `${text.slice(0, SNIPPET_CHARS - 1)}…` : text}`);
     const date = s.createdAt ? `${String(s.createdAt).slice(0, 10)} · ` : "";
-    const steady = s.confirmedBy > 0 ? ` · steady (confirmed by ${s.confirmedBy})` : "";
-    lines.push(`    ${date}${s.trust ? formatTrustSummary(s.trust) : "no trust evidence"}${steady} · ${s.id}`);
+    lines.push(`    ${date}${s.trust ? formatTrustSummary(s.trust) : "no trust evidence"} · ${s.id}`);
     if (s.refines) lines.push(`    ↻ refines [${s.refines}]`);
     const refined = (Array.isArray(s.refinedBy) ? s.refinedBy : []).filter((n: number) => !shown.some((x) => x.n === n));
     if (refined.length > 0) lines.push(`    ↻ refined: see ${refined.map((n: number) => `[${n}]`).join("")}`);

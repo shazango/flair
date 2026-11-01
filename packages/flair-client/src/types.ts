@@ -214,6 +214,8 @@ export interface TrustBlock {
   hasClaimedProvenance: boolean;
   /** Times other agents reported using this memory; null when none recorded. */
   usageCount: number | null;
+  /** Agents other than the author who confirmed this memory held up (POST /RecordOutcome). */
+  confirmedBy?: number;
   validityStatus: "valid" | "expired" | "future";
   validFrom: string | null;
   validTo: string | null;

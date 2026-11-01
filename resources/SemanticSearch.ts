@@ -23,6 +23,7 @@ import { retrievalMode } from "./bm25.js";
 import { retrieveCandidates, DEFAULT_SELECT } from "./semantic-retrieval-core.js";
 import { projectRowsThroughPointers } from "./memory-host-source.js";
 import { attachTrust } from "./trust-block.js";
+import { attachConfirmations } from "./outcome-recording.js";
 import { bestSemanticSimilarity, evaluateAbstention } from "./abstention.js";
 
 // Candidate multiplier: fetch more candidates than needed from the HNSW index
@@ -424,6 +425,8 @@ export class SemanticSearch extends Resource {
     // copy carrying `trust` (and still-present `_semSimilarity`); the strip then
     // drops the internal field from the copy.
     const trusted = includeTrust ? projected.map((r: any) => attachTrust(r, true)) : projected;
+    // Outcome engine: others' confirmations (trust.confirmedBy), from the ledger. Response-only.
+    if (includeTrust) await attachConfirmations(trusted);
     // flair#744 slice 2 + refinement: strip the internal `_semSimilarity`
     // confidence field from the consumer-facing results — it exists ONLY to feed
     // the abstention decision and the matchQuality classification, never the

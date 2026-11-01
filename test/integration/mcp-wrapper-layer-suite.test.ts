@@ -477,4 +477,12 @@ describe("/mcp TOOLS wrapper layer — every tool driven through its real .impl"
     expect(res.error, "record_usage must not return an error").toBeUndefined();
     expect(res.recorded, "record_usage acknowledges with recorded:true").toBe(true);
   }, 120_000);
+
+  // ── record_outcome (write) ──
+  test("record_outcome: returns the invariant { recorded } acknowledgement", async () => {
+    const res = await tool("record_outcome", { memoryId: GET_ID, kind: "confirmed" });
+    expect(res, `record_outcome must return a result, got: ${JSON.stringify(res).slice(0, 200)}`).toBeTruthy();
+    expect(res.error, "record_outcome must not return an error").toBeUndefined();
+    expect(res.recorded, "record_outcome acknowledges with recorded:true").toBe(true);
+  }, 120_000);
 });

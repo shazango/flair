@@ -42,9 +42,10 @@ flair ask --confirm mem-7f3a…,mem-91c2…                  # these held up
 flair ask --refine mem-7f3a… "also re-run flair init afterwards"
 ```
 
-- **`--confirm`** records that the memories held up for you. Later answers show a memory
-  others keep confirming as *steady (confirmed by N)*. Your confirmation of your own memory
-  is stored but not counted: standing comes from others relying on a memory.
+- **`--confirm`** records that the memories held up for you. A memory others keep
+  confirming shows as *steady (confirmed by N)* in its trust evidence: in `ask`, in
+  `flair search --trust`, and in MCP `memory_search` with `includeTrust`. Your confirmation
+  of your own memory is stored but not counted: standing comes from others relying on a memory.
 - **`--refine`** saves what's more accurate as a new shared memory and links it to the one
   it improves. From then on, whenever `ask` uses the original, the refinement comes with
   it, marked `↻ refines [n]`, and the model answers from both.
@@ -54,7 +55,10 @@ confirmations and its place in search; it just gains a pointer forward. Nothing 
 corrections against a memory or an agent, and no view lists who refined what. A
 refinement you keep private is only brought forward for readers who can read it.
 
-Both go through `POST /RecordOutcome`, which follows the same rules as `RecordUsage`: any
+Agents do the same through the MCP `record_outcome` tool (native `/mcp` and the stdio
+server): `kind: "confirmed"`, or `kind: "refined"` with the id of a memory they wrote.
+
+All of these go through `POST /RecordOutcome`, which follows the same rules as `RecordUsage`: any
 verified agent, for memories in its read scope, one entry per agent and memory (repeats
 are ignored), and the same `{ recorded: true }` reply whether or not the memory exists or
 is visible to you, so it can't be used to probe ids. A refinement must name another
@@ -93,6 +97,6 @@ No answer written (no LLM backend is configured). The closest memories:
 | `abstained` | search found nothing above the threshold (`bestScore`, `threshold` say why) |
 | `answer` | the answer with `[n]` citations, or `null` |
 | `citations` | the `n` the answer cites |
-| `sources` | `[{ n, id, content, createdAt, trust, confirmedBy, refinedBy, refines }]`, numbered as in the answer. `confirmedBy`: agents other than the author who confirmed it; `refinedBy`: the `n` of its readable refinements; `refines`: on a refinement search didn't return, the `n` it refines |
+| `sources` | `[{ n, id, content, createdAt, trust, refinedBy, refines }]`, numbered as in the answer. `trust.confirmedBy`: agents other than the author who confirmed it; `refinedBy`: the `n` of its readable refinements; `refines`: on a refinement search didn't return, the `n` it refines |
 | `answerUnavailable` | why `answer` is `null` despite sources: `no_backend`, `generate_failed`, `validation_failed`, `incomplete_generation` |
 | `model` | the configured model name, or `null` for the default |

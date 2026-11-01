@@ -515,13 +515,14 @@ export type RecordTypeName = keyof typeof RECORD_TYPES;
 //   bootstrap    — Soul + Memory + predicted-context composite (BootstrapMemories)
 //   attention    — cross-table aggregate query (AttentionQuery.ts), not a table verb
 //   record_usage — usage-signal resource (RecordUsage.ts), not a table verb
+//   record_outcome — confirmations/refinements resource (RecordOutcome.ts), not a table verb
 //   memory_basement — archive action (flair#1472), not a table verb
 //   memory_restore  — un-archive action (flair#1472), not a table verb
 //   skill_store     — skill-tagged Memory write (flair#1542), not a table verb
 //   skill_search    — skill-tagged Memory recall (flair#1546), rides SemanticSearch
 //   skill_get       — full skill read by id (flair#1546), rides Memory.get
 //
-export const COMPOSITE_MCP_TOOLS = ["bootstrap", "attention", "record_usage", "memory_basement", "memory_restore", "skill_store", "skill_search", "skill_get", "team_directory"] as const;
+export const COMPOSITE_MCP_TOOLS = ["bootstrap", "attention", "record_usage", "record_outcome", "memory_basement", "memory_restore", "skill_store", "skill_search", "skill_get", "team_directory"] as const;
 
 export type CompositeMcpTool = (typeof COMPOSITE_MCP_TOOLS)[number];
 

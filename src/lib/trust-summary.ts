@@ -12,6 +12,7 @@ export function formatTrustSummary(t: any): string {
   if (t?.matchQuality) parts.push(`${t.matchQuality} match`);
   parts.push(t?.provenanceStatus === "verified" && t?.verifiedAuthor ? `verified author ${t.verifiedAuthor}` : "author unattributed");
   if (typeof t?.usageCount === "number" && t.usageCount > 0) parts.push(`used ${t.usageCount}×`);
+  if (typeof t?.confirmedBy === "number" && t.confirmedBy > 0) parts.push(`steady (confirmed by ${t.confirmedBy})`);
   if (typeof t?.ageDays === "number") {
     const updated = typeof t.staleDays === "number" && t.staleDays < t.ageDays ? `, updated ${t.staleDays}d ago` : "";
     parts.push(`${t.ageDays}d old${updated}`);

@@ -35,9 +35,16 @@ describe("growth, not blame (source tripwires)", () => {
   const src = (f: string) => readFileSync(join(import.meta.dir, "..", "..", f), "utf8");
 
   it("outcomes never feed scoring, read scope or authority", () => {
-    for (const f of ["resources/scoring.ts", "resources/memory-read-scope.ts", "resources/agent-auth.ts", "resources/trust-block.ts", "resources/SemanticSearch.ts"]) {
+    for (const f of ["resources/scoring.ts", "resources/memory-read-scope.ts", "resources/agent-auth.ts", "resources/trust-block.ts", "resources/semantic-retrieval-core.ts"]) {
       expect(src(f), f).not.toMatch(/outcome-recording|MemoryOutcome/);
     }
+  });
+
+  it("search uses them once, in its response tail, only with includeTrust", () => {
+    const search = src("resources/SemanticSearch.ts");
+    expect(search.match(/attachConfirmations\(/g)).toHaveLength(1);
+    expect(search).toMatch(/if \(includeTrust\) await attachConfirmations\(trusted\);/);
+    expect(search.indexOf("attachConfirmations(trusted)")).toBeGreaterThan(search.indexOf("noteSearchHits("));
   });
 
   it("the ledger has no REST surface and no agent grant", () => {

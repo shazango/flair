@@ -312,6 +312,7 @@ Clients on this page talk to the stdio server `@tpsdev-ai/flair-mcp`. Its `tools
 | `flair_catchup` | Drain this agent's own org-event catch-up feed. Page with `after`; advance the watermark with `ack` |
 | `team_directory` | List active agents with published tps-mail contacts. Filter by `id` or `name`; page with `cursor`/`limit` |
 | `record_usage` | Report that recalled memories were actually used (`memoryId` or `memoryIds`, plus optional `attribution`). Drives `usageCount` / `usageBoost` |
+| `record_outcome` | Say a memory held up (`kind: "confirmed"`) or point it to something more accurate you wrote (`kind: "refined"`, `refinementMemoryId`). Shows as *steady* and refinements in trust evidence and `ask`; never lowers the original |
 
 On the embedded `/mcp` handler, `soul_set` is listed only for a caller the soul write policy's source-authorization step admits (`Soul.post` applies its content guards after that step). That route authenticates callers with OAuth bearer tokens: a token subject mapped to an Agent acts as an agent principal, and the policy refuses an agent principal, so an agent's `tools/list` does not include `soul_set`. Listing resolves the caller the way a call does, except that it never JIT-provisions. An agent's soul is changed by the operator, on the agent's behalf (`flair soul set`).
 

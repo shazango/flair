@@ -19,11 +19,17 @@ const CASES: any[] = [
   { ...BASE, validityStatus: "expired", validTo: "2026-09-01T00:00:00Z", supersedes: null, staleDays: 12 },
   { ...BASE, validityStatus: "future", validFrom: "2027-01-01T00:00:00Z", ageDays: null },
   { ...BASE, usageCount: 0 },
+  { ...BASE, confirmedBy: 2 },
+  { ...BASE, confirmedBy: 0 },
 ];
 
 describe("formatTrustSummary", () => {
   it("renders the full block", () => {
     expect(formatTrustSummary(BASE)).toBe("strong match · verified author agent-b · used 3× · 12d old, updated 2d ago · replaces m0");
+  });
+  it("shows others' confirmations as steady", () => {
+    expect(formatTrustSummary({ ...BASE, confirmedBy: 2 })).toContain("used 3× · steady (confirmed by 2) · 12d old");
+    expect(formatTrustSummary({ ...BASE, confirmedBy: 0 })).not.toContain("steady");
   });
   it("matches the stdio adapter's line for every case", () => {
     for (const t of CASES) expect(`trust: ${formatTrustSummary(t)}`).toBe(formatTrustLine(t));

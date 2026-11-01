@@ -412,6 +412,19 @@ const record_usage: StdioHandler = async ({ memoryId, memoryIds, attribution }, 
   }
 };
 
+const record_outcome: StdioHandler = async ({ memoryId, kind, refinementMemoryId }, { flair, heartbeat }) => {
+  heartbeat();
+  try {
+    const body: Record<string, unknown> = { memoryId, kind };
+    if (kind === "refined") body.refinementMemoryId = refinementMemoryId;
+    const result = await flair.request<{ recorded?: boolean }>("POST", "/RecordOutcome", body);
+    const text = kind === "refined" ? "Refinement recorded; it will come up alongside the original." : "Recorded that it held up.";
+    return { content: [{ type: "text", text }], structuredContent: { recorded: result?.recorded === true } };
+  } catch (err) {
+    return errorResult(err, flair.url);
+  }
+};
+
 const skill_store: StdioHandler = async (
   { content, trigger, name, description, tags },
   { flair, heartbeat },
@@ -538,6 +551,7 @@ export const STDIO_TOOL_HANDLERS: Record<string, StdioHandler> = {
   flair_orgevent,
   flair_catchup,
   record_usage,
+  record_outcome,
   skill_store,
   skill_search,
   skill_get,

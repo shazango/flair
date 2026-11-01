@@ -145,6 +145,7 @@ function argsFor(name: string, marker: string): Record<string, unknown> {
     case "skill_get": return { id: `${marker}-id` };
     case "memory_update": return { id: `${marker}-id`, content: marker };
     case "record_usage": return { memoryId: `${marker}-id` };
+    case "record_outcome": return { memoryId: `${marker}-id`, kind: "confirmed" };
     case "soul_get": return { key: "role" };
     case "soul_set": return { key: "role", value: marker };
     case "flair_workspace_set": return { ref: marker };

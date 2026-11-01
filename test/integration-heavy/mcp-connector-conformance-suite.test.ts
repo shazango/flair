@@ -602,6 +602,12 @@ describe("/mcp connector conformance — each tool honors its declared contract"
     conform("record_usage", res, C("record_usage"));
     expect(res.recorded, "acknowledges recorded:true").toBe(true);
   }, 120_000);
+
+  test("record_outcome: the invariant { recorded:true } acknowledgement", async () => {
+    const res = await tool("record_outcome", { memoryId: GET_ID, kind: "confirmed" });
+    conform("record_outcome", res, C("record_outcome"));
+    expect(res.recorded, "acknowledges recorded:true").toBe(true);
+  }, 120_000);
 });
 
 // ── error contract (Kern #5) — one refused case per tool that declares one ────

@@ -768,6 +768,36 @@ export const TOOL_DESCRIPTORS: readonly ToolDescriptor[] = [
     },
     "outputShape": "Invariant acknowledgement { recorded:true } — byte-identical regardless of how many ids counted (no id enumeration, Sherlock)."
   },
+  {
+    "name": "record_outcome",
+    "description": "Say how a memory held up after you relied on it. kind \"confirmed\": it held up — memories others keep confirming show as steady in trust evidence. kind \"refined\": you found something more accurate — first write it with memory_store, then pass its id as refinementMemoryId; it will come up alongside the original from then on. A refinement is a pointer forward, not a mark against anyone: the original keeps its ranking and confirmations. Counted once per memory per agent; your own memories' confirmations are not counted.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "memoryId": {
+          "type": "string",
+          "description": "ID of the memory the outcome is about"
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "confirmed",
+            "refined"
+          ],
+          "description": "\"confirmed\" (it held up) or \"refined\" (here is something more accurate)"
+        },
+        "refinementMemoryId": {
+          "type": "string",
+          "description": "kind \"refined\" only: ID of a memory you wrote with the more accurate information"
+        }
+      },
+      "required": [
+        "memoryId",
+        "kind"
+      ]
+    },
+    "outputShape": "Invariant acknowledgement { recorded:true } — identical whether or not the memory exists or is visible to you (no id enumeration). A refinement that is not another memory you wrote is an error."
+  },
 ] as const satisfies readonly ToolDescriptor[];
 
 export const NATIVE_TOOL_DESCRIPTORS: readonly ToolDescriptor[] =
