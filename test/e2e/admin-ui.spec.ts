@@ -23,6 +23,7 @@ interface AdminPage {
 const pages: AdminPage[] = [
   { name: "dashboard", path: "/AdminDashboard", heading: "Dashboard" },
   { name: "memory", path: "/AdminMemory", heading: "Memory" },
+  { name: "ask", path: "/AdminAsk", heading: "Ask" },
   { name: "principals", path: "/AdminPrincipals", heading: "Principals" },
   { name: "connectors", path: "/AdminConnectors", heading: "Connectors" },
   { name: "idp", path: "/AdminIdp", heading: "IdP" },

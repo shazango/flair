@@ -17,6 +17,7 @@ import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { HarperInstance, startHarper, stopHarper, HARPER_STOP_BUDGET_MS } from "../helpers/harper-lifecycle";
 import { FlairClient } from "../../packages/flair-client/src/client";
+import { getModelId } from "../../resources/embeddings-provider.ts";
 
 interface TestAgent { id: string; publicKey: string; secretKey: Uint8Array }
 
@@ -129,5 +130,116 @@ describe("POST /Ask (real Harper)", () => {
     expect(body.answer).toBeNull();
     expect(body.answerUnavailable).toBe("validation_failed");
     expect(body.sources.map((s: any) => s.id)).toContain(sharedId);
+  });
+
+  test("an abstaining search returns in-scope closest matches only when asked", async () => {
+    // Seeded vectors, so abstention needs no embedding model: the query is orthogonal to both rows.
+    const nearId = `ask-near-${randomUUID()}`;
+    const nearPrivateId = `ask-near-private-${randomUUID()}`;
+    const row = (id: string, visibility: string) => ({
+      id, agentId: author.id, content: "A seeded note about descaling the kettle.", embedding: [1, 0, 0, 0],
+      embeddingModel: getModelId(), durability: "standard", visibility, createdAt: new Date().toISOString(),
+    });
+    const seeded = await fetch(harper.opsURL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: "Basic " + btoa(`${harper.admin.username}:${harper.admin.password}`) },
+      body: JSON.stringify({ operation: "insert", database: "flair", table: "Memory", records: [row(nearId, "shared"), row(nearPrivateId, "private")] }),
+    });
+    expect(seeded.status).toBe(200);
+
+    const search = async (extra: object) => {
+      const res = await fetch(`${harper.httpURL}/SemanticSearch`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: buildEd25519Auth(reader, "POST", "/SemanticSearch") },
+        body: JSON.stringify({ queryEmbedding: [0, 1, 0, 0], abstain: true, ...extra }),
+      });
+      expect(res.status).toBe(200);
+      return res.json();
+    };
+    // The embedding-space guard answers "not yet verified" until its scan completes.
+    let plain = await search({});
+    for (let i = 0; i < 60 && !plain.abstained; i++) {
+      await new Promise((r) => setTimeout(r, 500));
+      plain = await search({});
+    }
+    expect(plain.abstained).toBe(true);
+    expect(plain).not.toHaveProperty("closest");
+
+    const withClosest = await search({ includeClosest: true });
+    expect(withClosest.abstained).toBe(true);
+    expect(withClosest.results).toEqual([]);
+    const ids = withClosest.closest.map((m: any) => m.id);
+    expect(ids).toContain(nearId);
+    expect(ids).not.toContain(nearPrivateId);
+    const near = withClosest.closest.find((m: any) => m.id === nearId);
+    expect(near.trust.matchQuality).toBe("breadcrumb");
+    expect(near).not.toHaveProperty("_semSimilarity");
+    expect(near).not.toHaveProperty("embedding");
+  }, 60_000);
+
+  describe("GET /AdminAsk", () => {
+    const basic = () => "Basic " + btoa(`${harper.admin.username}:${harper.admin.password}`);
+    const page = (query: string, headers: Record<string, string> = { Authorization: basic() }) =>
+      fetch(`${harper.httpURL}/AdminAsk${query ? `?${query}` : ""}`, { headers });
+    const asReader = `q=${encodeURIComponent(QUESTION)}&agent=${encodeURIComponent(reader.id)}`;
+
+    test("is admin-only", async () => {
+      expect((await page("", {})).status).toBe(401);
+      expect((await page("", { Authorization: buildEd25519Auth(reader, "GET", "/AdminAsk") })).status).toBe(403);
+    });
+
+    test("renders the form and runs nothing without a question", async () => {
+      const res = await page("");
+      expect(res.status).toBe(200);
+      const html = await res.text();
+      expect(html).toContain(`<option value="${reader.id}"`);
+      expect(html).not.toContain("Sources");
+    });
+
+    test("answers from the chosen agent's read scope, escaping model and user text", async () => {
+      setModelResponse(JSON.stringify({ answer: "Sundays [1] <img src=x onerror=alert(1)>" }));
+      const res = await page(asReader);
+      expect(res.status).toBe(200);
+      const html = await res.text();
+      expect(html).toContain("Sundays [1] &lt;img src=x");
+      expect(html).not.toContain("<img src=x");
+      expect(html).toContain(sharedId);
+      expect(html).not.toContain(privateId);
+      expect(html).toContain(`verified author ${author.id}`);
+      expect(html).toContain("cited");
+
+      const reflected = await (await page(`q=${encodeURIComponent('"><script>alert(1)</script>')}&agent=${encodeURIComponent(reader.id)}`)).text();
+      expect(reflected).not.toContain("<script>alert(1)");
+    });
+
+    test("needs a known agent, and a cross-site request runs nothing", async () => {
+      setModelResponse("not json at all");
+      expect(await (await page("q=hello&agent=nobody")).text()).toContain("Choose an agent");
+      const crossSite = await (await page(asReader, { Authorization: basic(), "Sec-Fetch-Site": "cross-site" })).text();
+      expect(crossSite).toContain("hasn't been run");
+      expect(crossSite).not.toContain("No answer written");
+      const sameOrigin = await (await page(asReader, { Authorization: basic(), "Sec-Fetch-Site": "same-origin" })).text();
+      expect(sameOrigin).toContain("No answer written");
+    });
+
+    test("names neither a refinement's author nor the refined memory's", async () => {
+      const refinementId = `ask-refinement-${randomUUID()}`;
+      const readerClient = new FlairClient({ agentId: reader.id, url: harper.httpURL, keyPath: join(stubDir, `${reader.id}.key`) });
+      await readerClient.memory.write("The staging database rotation also needs a cache flush afterwards.", {
+        id: refinementId, durability: "persistent", visibility: "shared",
+      });
+      const recorded = await fetch(`${harper.httpURL}/RecordOutcome`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: buildEd25519Auth(reader, "POST", "/RecordOutcome") },
+        body: JSON.stringify({ memoryId: sharedId, kind: "refined", refinementMemoryId: refinementId }),
+      });
+      expect(recorded.status).toBe(200);
+      setModelResponse(JSON.stringify({ answer: "Sundays [1]." }));
+      const html = await (await page(asReader)).text();
+      expect(html).toContain(refinementId);
+      expect(html).toContain("refined: see");
+      expect(html).not.toContain(`verified author ${reader.id}`);
+      expect(html).not.toContain(`verified author ${author.id}`);
+    });
   });
 });

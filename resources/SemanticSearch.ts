@@ -24,6 +24,7 @@ import { retrieveCandidates, DEFAULT_SELECT } from "./semantic-retrieval-core.js
 import { projectRowsThroughPointers } from "./memory-host-source.js";
 import { attachTrust } from "./trust-block.js";
 import { attachConfirmations } from "./outcome-recording.js";
+import { closestMatches } from "./closest-matches.js";
 import { bestSemanticSimilarity, evaluateAbstention } from "./abstention.js";
 
 // Candidate multiplier: fetch more candidates than needed from the HNSW index
@@ -70,7 +71,7 @@ export class SemanticSearch extends Resource {
     // recall-harness (test/bench/recall-harness/run.ts) and `recall-eval.mjs`
     // before reconsidering this default if the compositeScore formula or
     // corpus changes.
-    const { agentId: bodyAgentId, q, queryEmbedding, tag, subject, subjects, limit = 10, includeSuperseded = false, scoring = "raw", minScore = 0, since, asOf, includeTrust = false, includeMetadata = false, includeTrigger = false, abstain = false, explain = false, includeLegs = false, includeArchived = false } = data || {};
+    const { agentId: bodyAgentId, q, queryEmbedding, tag, subject, subjects, limit = 10, includeSuperseded = false, scoring = "raw", minScore = 0, since, asOf, includeTrust = false, includeMetadata = false, includeTrigger = false, abstain = false, includeClosest = false, explain = false, includeLegs = false, includeArchived = false } = data || {};
 
     // Authenticated identity lives on the Harper Resource context (getContext().request).
     // `this.request` is NOT populated on Harper v5 Resources — prior reads here
@@ -370,6 +371,9 @@ export class SemanticSearch extends Resource {
     // authority-free), against the single GLOBAL threshold. Default OFF ⇒ this
     // whole block is skipped and the response is byte-identical to pre-slice-2.
     let abstention: ReturnType<typeof evaluateAbstention> | null = null;
+    // flair#1940 A1' item 4: only a non-admin agent scoped to itself is a
+    // "reader" under the withheld rule; an admin/internal call stays unfiltered.
+    const hostSourceReader: string | undefined = authenticatedAgent && !callerIsAdmin ? authenticatedAgent : undefined;
     if (abstain) {
       abstention = evaluateAbstention(bestSemanticSimilarity(filteredResults));
       if (abstention.abstained) {
@@ -379,6 +383,8 @@ export class SemanticSearch extends Resource {
           bestScore: abstention.bestScore,
           threshold: abstention.threshold,
           results: [],
+          // Outcome engine: opt-in near misses, kept apart from `results` and never hit-tracked.
+          ...(includeClosest ? { closest: await closestMatches(filteredResults, hostSourceReader, ctx) } : {}),
           ...(spaceGuardVerdict ? { _warning: spaceGuardWarning(spaceGuardVerdict, q ? "keyword" : "none") } : {}),
         };
       }
@@ -397,11 +403,9 @@ export class SemanticSearch extends Resource {
       filteredResults.slice(0, limit).map((r: any) => applyHitStats(r, ctx)),
     );
 
-    // flair#1940 A1' item 4 (semantic-search surface): the gated join. Only a
-    // non-admin agent scoped to itself is a "reader" under the withheld rule;
-    // an admin/internal call stays unfiltered. Fetch pointers for the WHOLE
-    // result set in ONE batched query (never one per row), then project.
-    const hostSourceReader: string | undefined = authenticatedAgent && !callerIsAdmin ? authenticatedAgent : undefined;
+    // flair#1940 A1' item 4 (semantic-search surface): the gated join. Fetch
+    // pointers for the WHOLE result set in ONE batched query (never one per
+    // row), then project.
     let projected = topResults;
     if (hostSourceReader) {
       projected = await projectRowsThroughPointers(topResults, hostSourceReader);

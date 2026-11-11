@@ -12,6 +12,7 @@ const check = new Function("expect", "send", "method", "path", "agent", "assertT
 const getOutcomes: Array<[string, number | readonly number[], string]> = [
   ["A2AAdapter", 200, "resources/A2AAdapter.ts:310: allowRead true; get:313 discovery; no search"],
   ["Admin", 403, "resources/Admin.ts:20: allowRead allowAdmin refuses before get:24; no search"],
+  ["AdminAsk", 403, "resources/AdminAsk.ts:67: allowRead allowAdmin refuses before get:71; no search"],
   ["AdminConnectors", 403, "resources/AdminConnectors.ts:11: allowRead allowAdmin refuses before get:15; no search"],
   ["AdminDashboard", 403, "resources/AdminDashboard.ts:14: allowRead allowAdmin refuses before get:18; no search"],
   ["AdminIdp", 403, "resources/AdminIdp.ts:11: allowRead allowAdmin refuses before get:15; no search"],

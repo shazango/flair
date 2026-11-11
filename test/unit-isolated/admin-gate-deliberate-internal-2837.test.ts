@@ -38,6 +38,7 @@ const RESOURCES_DIR = join(import.meta.dir, "..", "..", "resources");
 /** class name → module that exports it → the allow* methods that call allowAdmin. */
 const ADMIN_GATED: Array<{ cls: string; module: string; methods: string[] }> = [
   { cls: "Admin", module: "Admin.ts", methods: ["allowRead"] },
+  { cls: "AdminAsk", module: "AdminAsk.ts", methods: ["allowRead"] },
   { cls: "AdminConnectors", module: "AdminConnectors.ts", methods: ["allowRead"] },
   { cls: "AdminDashboard", module: "AdminDashboard.ts", methods: ["allowRead"] },
   { cls: "AdminIdp", module: "AdminIdp.ts", methods: ["allowRead"] },

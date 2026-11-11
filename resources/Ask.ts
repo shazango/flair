@@ -11,6 +11,9 @@
  * Response:
  *   abstained  boolean — search found nothing that clears the global confidence
  *                        threshold; no answer is written (bestScore/threshold say why)
+ *   closest    [{ id, content, createdAt, trust }] — only when abstained: the nearest
+ *                        memories in read scope (at most 3). Not sources: the model never
+ *                        sees them, and they are not counted as search hits
  *   answer     string | null — cites sources as [n]; null when abstained, when there
  *                        are no sources, or when no answer could be written
  *   citations  number[] — the [n] the answer actually cites
@@ -105,12 +108,18 @@ export class Ask extends Resource {
       limit: clampCount(limit, DEFAULT_ASK_LIMIT, MAX_ASK_LIMIT),
       includeTrust: true,
       abstain: true,
+      includeClosest: true,
     });
     if (search instanceof Response) return search;
 
     const model = process.env.FLAIR_REM_MODEL || undefined;
     const base = { bestScore: search.bestScore ?? null, threshold: search.threshold ?? null, model: model ?? null };
-    if (search.abstained) return { abstained: true, answer: null, citations: [], sources: [], ...base };
+    if (search.abstained) {
+      const closest = (search.closest ?? []).map((r: any) => ({
+        id: r.id, content: r.content, createdAt: r.createdAt ?? null, trust: r.trust ?? null,
+      }));
+      return { abstained: true, answer: null, citations: [], sources: [], closest, ...base };
+    }
 
     const results: any[] = search.results ?? [];
     const sources: any[] = results.map((r: any, i: number) => ({

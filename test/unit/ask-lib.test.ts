@@ -120,7 +120,8 @@ describe("formatAskResult", () => {
       sources: [{ ...sources[0], trust: { ...sources[0].trust, confirmedBy: 2 }, refinedBy: [3] }, { n: 3, id: "m-3", content: "Also re-run init.", trust: null, refines: 1 }],
     });
     expect(text).toContain("· 3d old · m-1\n[3] Also re-run init.");
-    expect(text).toContain("steady (confirmed by 2)");
+    expect(text).toContain("strong match · steady (confirmed by 2) · 3d old · m-1");
+    expect(text).not.toContain("verified author");
     expect(text).toContain("Held up?  flair ask --confirm m-1,m-3\n");
   });
 
@@ -134,6 +135,19 @@ describe("formatAskResult", () => {
     expect(formatAskResult({ abstained: true, bestScore: 0.08, threshold: 0.15, sources: [] }))
       .toBe("No memory covers this confidently (best match 0.08, below the 0.15 confidence threshold). Nothing to answer from yet.");
     expect(formatAskResult({ abstained: false, answer: null, sources: [] })).toBe("No memory covers this yet.");
+  });
+
+  it("lists the closest memories when it abstains, without numbering them as sources", () => {
+    const text = formatAskResult({
+      abstained: true, bestScore: 0.08, threshold: 0.15, sources: [],
+      closest: [{ id: "m-9", content: "A near miss.", createdAt: "2026-01-02T00:00:00Z", trust: null }],
+    });
+    expect(text).toBe([
+      "No memory covers this confidently (best match 0.08, below the 0.15 confidence threshold). The closest memories, which may not be relevant:",
+      "",
+      "- A near miss.",
+      "    2026-01-02 · no trust evidence · m-9",
+    ].join("\n"));
   });
 });
 

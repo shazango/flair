@@ -48,6 +48,7 @@ export function layout(title: string, content: string, activePage?: string): str
   const nav = [
     { href: "/AdminDashboard", label: "Home", id: "home" },
     { href: "/AdminMemory", label: "Memory", id: "memory" },
+    { href: "/AdminAsk", label: "Ask", id: "ask" },
     { href: "/AdminPrincipals", label: "Principals", id: "principals" },
     { href: "/AdminConnectors", label: "Connectors", id: "connectors" },
     { href: "/AdminIdp", label: "IdP", id: "idp" },

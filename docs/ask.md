@@ -24,7 +24,9 @@ Answers need a generative backend, the same one REM uses (see
    This is the same `POST /SemanticSearch` an agent's `search` makes, so it sees the same
    memories and counts as an ordinary search.
 2. **Abstains** when nothing clears the global confidence threshold. It says
-   "No memory covers this confidently" and doesn't call the model.
+   "No memory covers this confidently", doesn't call the model, and lists up to three
+   of the closest memories in the agent's read scope, labelled as possibly irrelevant.
+   They aren't an answer or sources, and they don't count as search hits.
 3. Otherwise asks the model to answer **only** from the numbered memories, to cite every
    claim, to say plainly when the memories don't cover the question, and to show both
    views when memories disagree.
@@ -52,7 +54,8 @@ flair ask --refine mem-7f3a… "also re-run flair init afterwards"
 
 Refinement is growth, not blame. The original memory keeps its ranking, its
 confirmations and its place in search; it just gains a pointer forward. Nothing counts
-corrections against a memory or an agent, and no view lists who refined what. A
+corrections against a memory or an agent, and no view lists who refined what: `ask`
+leaves the author off a refinement and off the memory it refines. A
 refinement you keep private is only brought forward for readers who can read it.
 
 Agents do the same through the MCP `record_outcome` tool (native `/mcp` and the stdio
@@ -76,6 +79,15 @@ No answer written (no LLM backend is configured). The closest memories:
     2026-09-14 · strong match · verified author ops-bot · 47d old · mem-7f3a…
 ```
 
+## In the web admin
+
+`/AdminAsk` asks from the read scope of an agent you pick, so you see what that agent
+would be told. It shows the answer, every source with its trust evidence, and the closest
+memories when `ask` abstains. It needs an agent because asking with no read scope would
+send every agent's private memories to the model. Like the CLI, it leaves authors off
+refinements. It records nothing: confirmations and refinements come from the agents
+themselves. A link from another site fills in the form but doesn't run the question.
+
 ## What it never does
 
 - **It records nothing by itself.** Asking writes nothing, and `ask` never records usage
@@ -95,6 +107,7 @@ No answer written (no LLM backend is configured). The closest memories:
 | Field | Meaning |
 |---|---|
 | `abstained` | search found nothing above the threshold (`bestScore`, `threshold` say why) |
+| `closest` | only when abstained: up to 3 `{ id, content, createdAt, trust }`, the nearest memories in read scope. Not sources; the model never sees them |
 | `answer` | the answer with `[n]` citations, or `null` |
 | `citations` | the `n` the answer cites |
 | `sources` | `[{ n, id, content, createdAt, trust, refinedBy, refines }]`, numbered as in the answer. `trust.confirmedBy`: agents other than the author who confirmed it; `refinedBy`: the `n` of its readable refinements; `refines`: on a refinement search didn't return, the `n` it refines |

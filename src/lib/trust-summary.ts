@@ -23,6 +23,19 @@ export function formatTrustSummary(t: any): string {
   return parts.join(" · ");
 }
 
+/** Why POST /Ask returned sources but no answer (its `answerUnavailable`). */
+export const ASK_UNAVAILABLE: Record<string, string> = {
+  no_backend: "no LLM backend is configured",
+  generate_failed: "the LLM call failed",
+  validation_failed: "the LLM's reply was not usable",
+  incomplete_generation: "the LLM's reply was cut off",
+};
+
+/** Growth, not blame: wherever a refinement is shown, its author and the refined memory's go unnamed. */
+export function withoutAuthor(summary: string): string {
+  return summary.split(" · ").filter((p) => !p.startsWith("verified author") && p !== "author unattributed").join(" · ");
+}
+
 export function formatAbstentionSummary(result: any): string {
   const best = typeof result?.bestScore === "number" ? `best match ${result.bestScore.toFixed(2)}` : "no semantic match";
   const floor = typeof result?.threshold === "number" ? `, below the ${result.threshold} confidence threshold` : "";

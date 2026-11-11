@@ -11,6 +11,7 @@ const healthReadinessStatuses = [200, 503] as const;
 export const TPS_GET_ROUTE_STATUS: Record<string, number | readonly number[]> = {
   A2AAdapter: 200,
   Admin: 403,
+  AdminAsk: 403,
   AdminConnectors: 403,
   AdminDashboard: 403,
   AdminIdp: 403,
